@@ -13,15 +13,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait Localizer {
 
-  def get(country: String, sku: String): Future[Option[Price]]
+  def get(country: String, sku: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[Option[Price]]
 
 }
 
 object Localizer {
 
-  def apply(redisClientPool: RedisClientPool)(
-    implicit executionContext: ExecutionContext
-  ): Localizer = {
+  def apply(redisClientPool: RedisClientPool): Localizer = {
     new LocalizerImpl(
       new RedisLocalizerClient(redisClientPool)
     )
@@ -38,11 +38,11 @@ private[this] case class Key(
   }
 }
 
-class LocalizerImpl @Inject() (localizerClient: LocalizerClient)(
-  implicit executionContext: ExecutionContext
-) extends Localizer {
+class LocalizerImpl @Inject() (localizerClient: LocalizerClient) extends Localizer {
 
-  override def get(country: String, sku: String): Future[Option[Price]] = {
+  override def get(country: String, sku: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[Option[Price]] = {
     val key = Key(country = country, sku = sku).key
 
     localizerClient.get(key).map { optionalPrice =>
