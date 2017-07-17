@@ -2,6 +2,10 @@
 
 Library to retrieve localized data
 
+## Instantiating a Localizer
+
+   `val localizer = Localizer(new RedisClientPool("redis_host", 6379))`
+
 ## Publishing a new version
 
 	go run release.go
