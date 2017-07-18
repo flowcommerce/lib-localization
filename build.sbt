@@ -1,5 +1,3 @@
-import play.PlayImport.PlayKeys._
-
 name := "lib-localization"
 
 organization := "io.flow"
@@ -13,8 +11,9 @@ lazy val root = project
   .enablePlugins(PlayScala)
   .settings(
     libraryDependencies ++= Seq(
-      ws,
-      "org.scalatestplus" %% "play" % "1.4.0" % "test"
+      "net.debasishg" %% "redisclient" % "3.4",
+      "org.scalatest" %% "scalatest" % "3.0.3" % "test",
+      "org.mockito" % "mockito-core" % "2.8.47" % "test"
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
