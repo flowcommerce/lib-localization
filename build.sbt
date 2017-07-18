@@ -12,7 +12,7 @@ lazy val root = project
   .settings(
     libraryDependencies ++= Seq(
       "net.debasishg" %% "redisclient" % "3.4",
-      "org.scalatest" % "scalatest_2.11" % "3.0.3" % "test",
+      "org.scalatest" %% "scalatest" % "3.0.3" % "test",
       "org.mockito" % "mockito-core" % "2.8.47" % "test"
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
