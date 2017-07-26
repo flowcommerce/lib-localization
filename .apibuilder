@@ -1,9 +1,5 @@
 code:
   flow:
-    common:
-      version: latest
-      generators:
-        play_2_x_json: app/generated
     localized-items-cache:
       version: latest
       generators:
