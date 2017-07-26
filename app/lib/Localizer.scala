@@ -35,7 +35,7 @@ trait Localizer {
   def getByCountry(country: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[LocalizedPricing]] = {
-    getByCountry(country, itemNumber).map( _.map(convert(_, targetCurrency)) )
+    getByCountry(country, itemNumber)(executionContext).map( _.map(convert(_, targetCurrency)) )
   }
 
   /**
@@ -66,7 +66,7 @@ trait Localizer {
   def getByExperience(experienceKey: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[LocalizedPricing]] = {
-    getByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)) )
+    getByExperience(experienceKey, itemNumber)(executionContext).map(_.map(convert(_, targetCurrency)) )
   }
 }
 
