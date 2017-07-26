@@ -13,6 +13,7 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "io.flow" %% "lib-reference-scala" % "0.1.24",
       "net.debasishg" %% "redisclient" % "3.4",
+      "com.gilt" %% "gfc-cache" % "0.0.3",
       "org.scalatest" %% "scalatest" % "3.0.3" % "test",
       "org.mockito" % "mockito-core" % "2.8.47" % "test"
     ),
