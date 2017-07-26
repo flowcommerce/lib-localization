@@ -40,18 +40,18 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizerClient = mock[LocalizerClient]
 
       val country = "CAN"
-      val itemId = "item123"
+      val itemNumber = "item123"
 
-      val countryKey = s"country-$country:$itemId"
+      val key = s"country-$country:$itemNumber"
       val value: String = Json.toJson(pricing).toString
 
-      when(localizerClient.get(countryKey)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient)
 
       eventually(Timeout(3.seconds)) {
         Await.result(
-          localizer.getByCountry(country = country, itemId = itemId),
+          localizer.getByCountry(country = country, itemNumber = itemNumber),
           3.seconds
         ) shouldBe Some(pricing)
       }
@@ -60,19 +60,19 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     "retrieve a localized pricing by experience" in {
       val localizerClient = mock[LocalizerClient]
 
-      val experienceId = "ExperienceId"
-      val itemId = "item123"
+      val experienceKey = "canada-2"
+      val itemNumber = "item123"
 
-      val experienceKey = s"experience-$experienceId:$itemId"
+      val key = s"experience-$experienceKey:$itemNumber"
       val value: String = Json.toJson(pricing).toString
 
-      when(localizerClient.get(experienceKey)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient)
 
       eventually(Timeout(3.seconds)) {
         Await.result(
-          localizer.getByExperience(experienceId, itemId = itemId),
+          localizer.getByExperience(key, itemNumber = itemNumber),
           3.seconds
         ) shouldBe Some(pricing)
       }

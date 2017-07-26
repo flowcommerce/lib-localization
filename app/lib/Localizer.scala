@@ -21,20 +21,20 @@ trait Localizer {
     */
   def getByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]]
+  ): Future[Option[FlowSkuPrice]]
 
   /**
     * Returns the localized pricing of the specified item for the specified country,
     * then converting as necessary to the specified target currency.
-    * 
+    *
     * @param country country in the ISO 3166-3 format
     * @param itemNumber the id of the item
     * @param targetCurrency the ISO currency code
     * @return the localized pricing of the specified item for the specified country
     */
-  def getByCountry(country: String, itemNumber: String, targetCurrency: String)(
+  def getByCountryWithCurrency(country: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]] = {
+  ): Future[Option[FlowSkuPrice]] = {
     getByCountry(country, itemNumber).map( _.map(convert(_, targetCurrency)) )
   }
 
@@ -43,7 +43,7 @@ trait Localizer {
     *
     * @param targetCurrency the ISO currency code
     */
-  def convert(pricing: LocalizedPricing, targetCurrency: String): LocalizedPricing
+  def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice
 
   /**
     * Returns localized pricing of the specified item for the specified experience
@@ -53,7 +53,7 @@ trait Localizer {
     */
   def getByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]]
+  ): Future[Option[FlowSkuPrice]]
 
 
   /**
@@ -63,9 +63,9 @@ trait Localizer {
     * @param targetCurrency the ISO currency code
     * @return the localized pricing of the specified item for the specified experience
     */
-  def getByExperience(experienceKey: String, itemNumber: String, targetCurrency: String)(
+  def getByExperienceWithCurrency(experienceKey: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]] = {
+  ): Future[Option[FlowSkuPrice]] = {
     getByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)) )
   }
 }
@@ -89,31 +89,33 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient) extends Localiz
 
   override def getByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]] = {
+  ): Future[Option[FlowSkuPrice]] = {
     get(CountryKey(country = country, itemNumber = itemNumber))
   }
 
   override def getByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]] = {
+  ): Future[Option[FlowSkuPrice]] = {
     get(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
   }
 
   private def get(keyProvider: KeyProvider)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[LocalizedPricing]] = {
+  ): Future[Option[FlowSkuPrice]] = {
     localizerClient.get(keyProvider.getKey).map { optionalPrice =>
-      optionalPrice.map(
-        Json.parse(_).as[LocalizedPricing]
-      )
+      optionalPrice.map { js =>
+        FlowSkuPrice(
+          Json.parse(js).as[LocalizedPricing]
+        )
+      }
     }
   }
 
-  override def convert(pricing: LocalizedPricing, targetCurrency: String): LocalizedPricing = ???
+  override def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice = ???
 
 }
 
-private[this] trait KeyProvider {
+private[this] sealed trait KeyProvider {
   def getKey: String
 }
 
