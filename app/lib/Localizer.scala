@@ -5,6 +5,7 @@ import javax.inject.Inject
 import com.redis.RedisClientPool
 import io.flow.localized.items.cache.v0.models.LocalizedPricing
 import io.flow.localized.items.cache.v0.models.json._
+import io.flow.reference.Countries
 import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -120,11 +121,14 @@ private[this] sealed trait KeyProvider {
 }
 
 private[this] case class CountryKey(country: String, itemNumber: String) extends KeyProvider {
-  def getKey: String = s"country-$country:$itemNumber"
+  def getKey: String = {
+    val code = Countries.find(country).map(_.iso31662).getOrElse(country).toLowerCase
+    s"country-$code:$itemNumber"
+  }
 }
 
 private[this] case class ExperienceKey(experience: String, itemNumber: String) extends KeyProvider {
-  def getKey: String = s"experience-$experience:$itemNumber"
+  def getKey: String = s"experience-${experience.toLowerCase}:$itemNumber"
 }
 
 private[this] case object Rates extends KeyProvider {

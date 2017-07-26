@@ -62,9 +62,17 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(3.seconds)) {
         Await.result(
-          localizer.getByCountry(country = country, itemNumber = itemNumber),
+          localizer.getByCountry(country, itemNumber = itemNumber),
           3.seconds
-        ) shouldBe Some(pricing)
+        ) shouldBe Some(FlowSkuPrice(pricing))
+      }
+
+      // Verify can retrieve by two character country code
+      eventually(Timeout(3.seconds)) {
+        Await.result(
+          localizer.getByCountry("CA", itemNumber = itemNumber),
+          3.seconds
+        ) shouldBe Some(FlowSkuPrice(pricing))
       }
     }
 
@@ -83,9 +91,17 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(3.seconds)) {
         Await.result(
-          localizer.getByExperience(key, itemNumber = itemNumber),
+          localizer.getByExperience(experienceKey, itemNumber = itemNumber),
           3.seconds
-        ) shouldBe Some(pricing)
+        ) shouldBe Some(FlowSkuPrice(pricing))
+      }
+
+      // Verify case insensitive
+      eventually(Timeout(3.seconds)) {
+        Await.result(
+          localizer.getByExperience(experienceKey.toUpperCase, itemNumber = itemNumber),
+          3.seconds
+        ) shouldBe Some(FlowSkuPrice(pricing))
       }
     }
 
