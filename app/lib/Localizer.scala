@@ -66,7 +66,7 @@ trait Localizer {
   def getByExperience(experienceKey: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[LocalizedPricing]] = {
-    getByExperience(experienceKey, itemNumber).map( _.map(convert(_, targetCurrency)) )
+    getByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)) )
   }
 }
 
@@ -108,6 +108,8 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient) extends Localiz
       )
     }
   }
+
+  override def convert(pricing: LocalizedPricing, targetCurrency: String): LocalizedPricing = ???
 
 }
 
