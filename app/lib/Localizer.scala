@@ -126,3 +126,7 @@ private[this] case class CountryKey(country: String, itemNumber: String) extends
 private[this] case class ExperienceKey(experience: String, itemNumber: String) extends KeyProvider {
   def getKey: String = s"experience-$experience:$itemNumber"
 }
+
+private[this] case object Rates extends KeyProvider {
+  def getKey: String = "rates"
+}

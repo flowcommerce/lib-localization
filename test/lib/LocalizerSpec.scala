@@ -1,7 +1,6 @@
 package io.flow.lib
 
-import io.flow.common.v0.models.{Price, PriceWithBase}
-import io.flow.localized.items.cache.v0.models.{LocalizedCachePrice, LocalizedPricing}
+import io.flow.localized.items.cache.v0.models.{LocalizedItemPrice, LocalizedItemPrices, LocalizedPricing}
 import io.flow.localized.items.cache.v0.models.json._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
@@ -16,19 +15,31 @@ import scala.concurrent.{Await, Future}
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
 
-  private val pricing = LocalizedPricing(
-    prices = Seq(
-      LocalizedCachePrice(
-        key = "sale",
-        price = PriceWithBase(
-          amount = 50,
+  private val pricing = LocalizedPricing (
+    price = LocalizedItemPrices(
+      local = LocalizedItemPrice(
+        currency = "CAD",
+        amount = 50,
+        label = "CA$50.00"
+      ),
+      base = LocalizedItemPrice(
+        currency = "USD",
+        amount = 40,
+        label = "$40.00"
+      )
+    ),
+    includes = None,
+    attributes = Map(
+      "msrp" -> LocalizedItemPrices(
+        local = LocalizedItemPrice(
+          amount = 100,
           currency = "CAD",
-          label = "CA$50.00",
-          base = Some(Price(
-            amount = 50,
-            currency = "CAD",
-            label = "CA$50.00"
-          ))
+          label = "CA$100.00"
+        ),
+        base = LocalizedItemPrice(
+          amount = 100,
+          currency = "USD",
+          label = "$75.00"
         )
       )
     )
