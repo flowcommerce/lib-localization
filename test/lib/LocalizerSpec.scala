@@ -1,7 +1,6 @@
 package io.flow.lib
 
-import io.flow.common.v0.models.{Price, PriceWithBase}
-import io.flow.localized.items.cache.v0.models.{LocalizedCachePrice, LocalizedPricing}
+import io.flow.localized.items.cache.v0.models.{LocalizedItemPrice, LocalizedItemPrices, LocalizedPricing}
 import io.flow.localized.items.cache.v0.models.json._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
@@ -16,19 +15,31 @@ import scala.concurrent.{Await, Future}
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
 
-  private val pricing = LocalizedPricing(
-    prices = Seq(
-      LocalizedCachePrice(
-        key = "sale",
-        price = PriceWithBase(
-          amount = 50,
+  private val pricing = LocalizedPricing (
+    price = LocalizedItemPrices(
+      local = LocalizedItemPrice(
+        currency = "CAD",
+        amount = 50,
+        label = "CA$50.00"
+      ),
+      base = LocalizedItemPrice(
+        currency = "USD",
+        amount = 40,
+        label = "$40.00"
+      )
+    ),
+    includes = None,
+    attributes = Map(
+      "msrp" -> LocalizedItemPrices(
+        local = LocalizedItemPrice(
+          amount = 100,
           currency = "CAD",
-          label = "CA$50.00",
-          base = Some(Price(
-            amount = 50,
-            currency = "CAD",
-            label = "CA$50.00"
-          ))
+          label = "CA$100.00"
+        ),
+        base = LocalizedItemPrice(
+          amount = 100,
+          currency = "USD",
+          label = "$75.00"
         )
       )
     )
@@ -40,18 +51,18 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizerClient = mock[LocalizerClient]
 
       val country = "CAN"
-      val itemId = "item123"
+      val itemNumber = "item123"
 
-      val countryKey = s"country-$country:$itemId"
+      val key = s"country-$country:$itemNumber"
       val value: String = Json.toJson(pricing).toString
 
-      when(localizerClient.get(countryKey)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient)
 
       eventually(Timeout(3.seconds)) {
         Await.result(
-          localizer.getByCountry(country = country, itemId = itemId),
+          localizer.getByCountry(country = country, itemNumber = itemNumber),
           3.seconds
         ) shouldBe Some(pricing)
       }
@@ -60,19 +71,19 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     "retrieve a localized pricing by experience" in {
       val localizerClient = mock[LocalizerClient]
 
-      val experienceId = "ExperienceId"
-      val itemId = "item123"
+      val experienceKey = "canada-2"
+      val itemNumber = "item123"
 
-      val experienceKey = s"experience-$experienceId:$itemId"
+      val key = s"experience-$experienceKey:$itemNumber"
       val value: String = Json.toJson(pricing).toString
 
-      when(localizerClient.get(experienceKey)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient)
 
       eventually(Timeout(3.seconds)) {
         Await.result(
-          localizer.getByExperience(experienceId, itemId = itemId),
+          localizer.getByExperience(key, itemNumber = itemNumber),
           3.seconds
         ) shouldBe Some(pricing)
       }
