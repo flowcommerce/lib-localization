@@ -21,7 +21,7 @@ trait Localizer {
     * @param itemNumber the id of the item
     * @return the localized pricing of the specified item for the specified country
     */
-  def getByCountry(country: String, itemNumber: String)(
+  def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]]
 
@@ -34,10 +34,10 @@ trait Localizer {
     * @param targetCurrency the ISO currency code
     * @return the localized pricing of the specified item for the specified country
     */
-  def getByCountryWithCurrency(country: String, itemNumber: String, targetCurrency: String)(
+  def getSkuPriceByCountryWithCurrency(country: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    getByCountry(country, itemNumber).map(_.map(convert(_, targetCurrency)))
+    getSkuPriceByCountry(country, itemNumber).map(_.map(convert(_, targetCurrency)))
   }
 
   /**
@@ -53,7 +53,7 @@ trait Localizer {
     * @param itemNumber the id of the item
     * @return the localized pricing of the specified item for the specified experience
     */
-  def getByExperience(experienceKey: String, itemNumber: String)(
+  def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]]
 
@@ -65,26 +65,26 @@ trait Localizer {
     * @param targetCurrency the ISO currency code
     * @return the localized pricing of the specified item for the specified experience
     */
-  def getByExperienceWithCurrency(experienceKey: String, itemNumber: String, targetCurrency: String)(
+  def getSkuPriceByExperienceWithCurrency(experienceKey: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    getByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)))
+    getSkuPriceByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)))
   }
 }
 
 object Localizer {
 
-  private val DefaultRatesRefreshPeriodMs = 10.minutes.toMillis
+  private val DefaultRatesRefreshPeriod = FiniteDuration(1, MINUTES)
 
   /**
     * Creates a new [[Localizer]] backed by [[RedisLocalizerClient]]
     * @param redisClientPool the client pool to use to connect to redis
     * @return a new [[Localizer]] backed by [[RedisLocalizerClient]]
     */
-  def apply(redisClientPool: RedisClientPool, ratesRefreshPeriodMs: Long = DefaultRatesRefreshPeriodMs): Localizer = {
+  def apply(redisClientPool: RedisClientPool, ratesRefreshPeriod: FiniteDuration = DefaultRatesRefreshPeriod): Localizer = {
     val localizerClient = new RedisLocalizerClient(redisClientPool)
 
-    val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriodMs)
+    val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
     rateProvider.start()
 
     new LocalizerImpl(
@@ -99,13 +99,13 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   import LocalizerImpl._
 
-  override def getByCountry(country: String, itemNumber: String)(
+  override def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     getPricing(CountryKey(country = country, itemNumber = itemNumber))
   }
 
-  override def getByExperience(experienceKey: String, itemNumber: String)(
+  override def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))

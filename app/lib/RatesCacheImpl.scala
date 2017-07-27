@@ -4,6 +4,7 @@ import com.gilt.gfc.cache.{CacheConfiguration, SyncCacheImpl}
 import com.gilt.gfc.guava.cache.CacheInitializationStrategy
 import io.flow.localized.items.cache.v0.models.LocalizedItemCacheRates
 import io.flow.localized.items.cache.v0.models.json._
+import io.flow.reference.Currencies
 import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,17 +20,19 @@ private[lib] class RatesCacheImpl(localizerClient: LocalizerClient, override val
 
   import RatesCacheImpl._
 
-  implicit val ec = ExecutionContext.fromExecutor(executor)
+  private[this] implicit val ec = ExecutionContext.fromExecutor(executor)
 
   override def cacheInitStrategy: CacheInitializationStrategy = CacheInitializationStrategy.SYNC
 
-  override def get(base: String, target: String): Option[BigDecimal] = super.get((base.toLowerCase, target.toLowerCase))
+  override def get(base: String, target: String): Option[BigDecimal] = {
+    super.get(buildKey(base, target))
+  }
 
   override def getSourceObjects: Future[Iterable[((String, String), BigDecimal)]] = {
     getRates().map { optionalRates =>
       optionalRates
-        .map(_.rates.map(rate => (rate.base.toLowerCase, rate.target.toLowerCase) -> rate.value))
-        .getOrElse(sys.error("Rates cannot be found"))
+        .map(_.rates.map(rate => buildKey(rate.base, rate.target) -> rate.value))
+        .getOrElse(sys.error(s"Rates cannot be found - expected key named '$RatesKey"))
     }
   }
 
@@ -40,6 +43,16 @@ private[lib] class RatesCacheImpl(localizerClient: LocalizerClient, override val
       }
     }
   }
+
+  /**
+    * Formats the currency code in a deterministic way, preferring the lowercase
+    * ISO 42173 code when available
+    */
+  private def format(currencyCode: String): String = {
+    Currencies.find(currencyCode).map(_.iso42173).getOrElse(currencyCode).toLowerCase
+  }
+
+  private def buildKey(base: String, target: String) = (format(base), format(target))
 
 }
 

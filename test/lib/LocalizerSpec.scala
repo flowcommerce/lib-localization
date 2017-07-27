@@ -125,12 +125,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
 
       eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getByCountry(country, itemNumber = itemNumber)) {
+        whenReady(localizer.getSkuPriceByCountry(country, itemNumber = itemNumber)) {
           _ shouldBe Some(FlowSkuPrice(pricing))
         }
 
         // Verify can retrieve by three characters country code
-        whenReady(localizer.getByCountry("CAN", itemNumber = itemNumber)) {
+        whenReady(localizer.getSkuPriceByCountry("CAN", itemNumber = itemNumber)) {
           _ shouldBe Some(FlowSkuPrice(pricing))
         }
       }
@@ -150,12 +150,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
 
       eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getByExperience(experienceKey, itemNumber = itemNumber)) {
+        whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) {
           _ shouldBe Some(FlowSkuPrice(pricing))
         }
 
         // Verify case insensitive
-        whenReady(localizer.getByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {
+        whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {
           _ shouldBe Some(FlowSkuPrice(pricing))
         }
       }
@@ -189,7 +189,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizer = new LocalizerImpl(localizerClient, rateProvider)
 
       eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
           _ shouldBe Some(FlowSkuPrice(convertedPricing))
         }
       }
@@ -211,7 +211,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizer = new LocalizerImpl(localizerClient, rateProvider)
 
       eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
           _ shouldBe Some(FlowSkuPrice(convertedPricing))
         }
       }
@@ -235,13 +235,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val localizer = new LocalizerImpl(localizerClient, rateProvider)
 
       eventually(Timeout(1.seconds)) {
-        whenReady(localizer.getByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
           _ shouldBe Some(FlowSkuPrice(convertedPricing))
         }
       }
 
       eventually(Timeout(2.seconds)) {
-        whenReady(localizer.getByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
           _ shouldBe Some(FlowSkuPrice(convertedPricingAfterResfresh))
         }
       }
