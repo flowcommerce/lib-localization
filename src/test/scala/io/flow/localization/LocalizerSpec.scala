@@ -110,7 +110,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByCountry(country, itemNumber = itemNumber)) {
@@ -135,7 +135,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) {
@@ -162,7 +162,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
@@ -184,7 +184,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
@@ -208,7 +208,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
         .thenReturn(Some(BigDecimal(0.5)))
         .thenReturn(Some(BigDecimal(0.1)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(1.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
@@ -222,6 +222,19 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
         }
       }
 
+    }
+
+    "return if a country is enabled" in {
+      val localizerClient = mock[LocalizerClient]
+
+      val availableCountriesProvider = mock[AvailableCountriesProvider]
+      when(availableCountriesProvider.isEnabled("FRA")).thenReturn(true)
+      when(availableCountriesProvider.isEnabled("CAN")).thenReturn(false)
+
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], availableCountriesProvider)
+
+      localizer.isEnabled("FRA") shouldBe true
+      localizer.isEnabled("CAN") shouldBe false
     }
 
   }

@@ -83,6 +83,14 @@ trait Localizer {
   ): Future[Option[FlowSkuPrice]] = {
     getSkuPriceByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)))
   }
+
+  /**
+    * Returns true if the specified country is enabled, false otherwise
+    * @param country country in the ISO 3166-3 format
+    * @return true if the specified country is enabled, false otherwise
+    */
+  def isEnabled(country: String): Boolean
+
 }
 
 object Localizer {
@@ -100,15 +108,20 @@ object Localizer {
     val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
     rateProvider.start()
 
+    val availableCountriesProvider = new AvailableCountriesProviderImpl(localizerClient, ratesRefreshPeriod.toMillis)
+    availableCountriesProvider.start()
+
     new LocalizerImpl(
       localizerClient = localizerClient,
-      rateProvider = rateProvider
+      rateProvider = rateProvider,
+      availableCountriesProvider = availableCountriesProvider
     )
   }
 
 }
 
-class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: RateProvider) extends Localizer {
+class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: RateProvider,
+                               availableCountriesProvider: AvailableCountriesProvider) extends Localizer {
 
   import LocalizerImpl._
 
@@ -156,6 +169,8 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
         .getOrElse(sys.error(s"Cannot find conversino rate for $localCurrency -> $targetCurrency"))
     }
   }
+
+  override def isEnabled(country: String): Boolean = availableCountriesProvider.isEnabled(country)
 
 }
 
