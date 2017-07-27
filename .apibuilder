@@ -3,4 +3,4 @@ code:
     localized-items-cache:
       version: latest
       generators:
-        play_2_x_json: src/main/scala/generated
+        play_2_x_standalone_json: src/main/scala/generated
