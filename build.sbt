@@ -2,16 +2,16 @@ name := "lib-localization"
 
 organization := "io.flow"
 
-scalaVersion in ThisBuild := "2.11.11"
+scalaVersion in ThisBuild := "2.12.2"
 
-crossScalaVersions := Seq("2.11.11", "2.10.6")
+crossScalaVersions := Seq("2.12.2", "2.11.11", "2.10.6")
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(PlayScala)
   .settings(
-    libraryDependencies ++= Seq(
-      "io.flow" %% "lib-reference-scala" % "0.1.24",
+      libraryDependencies ++= Seq(
+      "com.typesafe.play" %% "play-json" % "2.6.2",
+      "io.flow" %% "lib-reference-scala" % "0.1.26",
       "net.debasishg" %% "redisclient" % "3.4",
       "com.gilt" %% "gfc-cache" % "0.0.3",
       "org.scalatest" %% "scalatest" % "3.0.3" % "test",
