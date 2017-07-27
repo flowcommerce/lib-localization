@@ -8,14 +8,14 @@ import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait RatesCache {
+private[this] trait RateProvider {
 
   def get(base: String, target: String): Option[BigDecimal]
 
 }
 
 private[lib] class RatesCacheImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
-  extends SyncCacheImpl[(String, String), BigDecimal] with CacheConfiguration with RatesCache {
+  extends SyncCacheImpl[(String, String), BigDecimal] with CacheConfiguration with RateProvider {
 
   import RatesCacheImpl._
 

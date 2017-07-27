@@ -19,8 +19,6 @@ import scala.concurrent.duration._
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
 
-  private val ratesRefreshPeriodMs = 1.minute.toMillis
-
   private val pricing = LocalizedItemCachePricing (
     price = LocalizedItemCachePrices(
       local = LocalizedItemCachePrice(
@@ -50,17 +48,6 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       )
     )
   )
-
-  val firstRate = LocalizedItemCacheRate(
-    id = "",
-    base = Currencies.Cad.iso42173,
-    target = Currencies.Eur.iso42173,
-    value = 0.5,
-    effectiveAt = DateTime.now
-  )
-
-  val firstRates = LocalizedItemCacheRates(rates = Seq(firstRate))
-  val secondRates = LocalizedItemCacheRates(rates = Seq(firstRate.copy(value = 0.1)))
 
   private val convertedPricing = LocalizedItemCachePricing (
     price = LocalizedItemCachePrices(
@@ -122,8 +109,6 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     )
   )
 
-  private val emptyRates = LocalizedItemCacheRates(rates = Seq.empty)
-
   "Localizer" should {
 
     "retrieve a localized pricing by country" in {
@@ -136,9 +121,8 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val value: String = Json.toJson(pricing).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any())).thenReturn(Future.successful(Some(Json.toJson(emptyRates).toString)))
 
-      val localizer = new LocalizerImpl(localizerClient, ratesRefreshPeriodMs)
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getByCountry(country, itemNumber = itemNumber)) {
@@ -162,9 +146,8 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val value: String = Json.toJson(pricing).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any())).thenReturn(Future.successful(Some(Json.toJson(emptyRates).toString)))
 
-      val localizer = new LocalizerImpl(localizerClient, ratesRefreshPeriodMs)
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getByExperience(experienceKey, itemNumber = itemNumber)) {
@@ -180,6 +163,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "retrieve and convert a localized pricing by country" in {
       val localizerClient = mock[LocalizerClient]
+      val rateProvider = mock[RateProvider]
 
       val country = Countries.Can.iso31662.toLowerCase
       val itemNumber = "item123"
@@ -200,9 +184,9 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       )
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any())).thenReturn(Future.successful(Some(Json.toJson(rates).toString)))
+      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, ratesRefreshPeriodMs)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider)
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
@@ -213,6 +197,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "retrieve and convert a localized pricing by experience" in {
       val localizerClient = mock[LocalizerClient]
+      val rateProvider = mock[RateProvider]
 
       val experienceKey = "canada-2"
       val itemNumber = "item123"
@@ -221,9 +206,9 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val value: String = Json.toJson(pricing).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any())).thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
+      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, ratesRefreshPeriodMs)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider)
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
@@ -234,6 +219,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "rates should refresh" in {
       val localizerClient = mock[LocalizerClient]
+      val rateProvider = mock[RateProvider]
 
       val country = Countries.Can.iso31662.toLowerCase
       val itemNumber = "item123"
@@ -242,13 +228,11 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val value: String = Json.toJson(pricing).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any()))
-        // first call returns the first rate of 0.5
-        .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
-        // second call returns the second rate of 0.1
-        .thenReturn(Future.successful(Some(Json.toJson(secondRates).toString)))
+      when(rateProvider.get(any(), any()))
+        .thenReturn(Some(BigDecimal(0.5)))
+        .thenReturn(Some(BigDecimal(0.1)))
 
-      val localizer = new LocalizerImpl(localizerClient, 1.second.toMillis)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider)
 
       eventually(Timeout(1.seconds)) {
         whenReady(localizer.getByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {

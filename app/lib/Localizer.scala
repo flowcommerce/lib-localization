@@ -82,20 +82,22 @@ object Localizer {
     * @return a new [[Localizer]] backed by [[RedisLocalizerClient]]
     */
   def apply(redisClientPool: RedisClientPool, ratesRefreshPeriodMs: Long = DefaultRatesRefreshPeriodMs): Localizer = {
+    val localizerClient = new RedisLocalizerClient(redisClientPool)
+
+    val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriodMs)
+    rateProvider.start()
+
     new LocalizerImpl(
-      localizerClient = new RedisLocalizerClient(redisClientPool),
-      ratesRefreshPeriodMs = ratesRefreshPeriodMs
+      localizerClient = localizerClient,
+      rateProvider = rateProvider
     )
   }
 
 }
 
-class LocalizerImpl @Inject() (localizerClient: LocalizerClient, ratesRefreshPeriodMs: Long) extends Localizer {
+class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: RateProvider) extends Localizer {
 
   import LocalizerImpl._
-
-  private val ratesCache = new RatesCacheImpl(localizerClient, ratesRefreshPeriodMs)
-  ratesCache.start()
 
   override def getByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
@@ -126,7 +128,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, ratesRefreshPer
     if (localCurrency == targetCurrency) {
       pricing
     } else {
-      ratesCache
+      rateProvider
         .get(localCurrency, targetCurrency)
         .map(rate => convertWithRate(pricing, targetCurrency, rate))
         // TODO: should we fall back to the original pricing instead of an error?
