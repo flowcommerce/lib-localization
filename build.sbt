@@ -10,12 +10,13 @@ lazy val root = project
   .in(file("."))
   .settings(
       libraryDependencies ++= Seq(
+      "com.gilt" %% "gfc-cache" % "0.0.3",
       "com.typesafe.play" %% "play-json" % "2.6.2",
       "io.flow" %% "lib-reference-scala" % "0.1.26",
+      "javax.inject" % "javax.inject" % "1",
       "net.debasishg" %% "redisclient" % "3.4",
-      "com.gilt" %% "gfc-cache" % "0.0.3",
-      "org.scalatest" %% "scalatest" % "3.0.3" % "test",
-      "org.mockito" % "mockito-core" % "2.8.47" % "test"
+      "org.mockito" % "mockito-core" % "2.8.47" % "test",
+      "org.scalatest" %% "scalatest" % "3.0.3" % "test"
     ),
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
