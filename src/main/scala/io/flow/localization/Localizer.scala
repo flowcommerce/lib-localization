@@ -1,4 +1,4 @@
-package io.flow.lib
+package io.flow.localization
 
 import javax.inject.Inject
 

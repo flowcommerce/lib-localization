@@ -1,4 +1,4 @@
-package io.flow.lib
+package io.flow.localization
 
 import com.gilt.gfc.cache.{CacheConfiguration, SyncCacheImpl}
 import com.gilt.gfc.guava.cache.CacheInitializationStrategy
@@ -15,7 +15,7 @@ private[this] trait RateProvider {
 
 }
 
-private[lib] class RatesCacheImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
+private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
   extends SyncCacheImpl[(String, String), BigDecimal] with CacheConfiguration with RateProvider {
 
   import RatesCacheImpl._

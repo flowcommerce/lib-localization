@@ -1,4 +1,4 @@
-package io.flow.lib
+package io.flow.localization
 
 import io.flow.localized.items.cache.v0.models.{LocalizedItemCacheIncludedLevyKey, LocalizedItemCachePrices, LocalizedItemCachePricing}
 
