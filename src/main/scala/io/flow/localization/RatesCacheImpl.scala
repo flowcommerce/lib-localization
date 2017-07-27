@@ -2,8 +2,9 @@ package io.flow.localization
 
 import com.gilt.gfc.cache.{CacheConfiguration, SyncCacheImpl}
 import com.gilt.gfc.guava.cache.CacheInitializationStrategy
-import io.flow.localized.items.cache.v0.models.LocalizedItemCacheRates
-import io.flow.localized.items.cache.v0.models.json._
+import io.flow.localization.RatesCacheImpl.RateKey
+import io.flow.localized.item.cache.v0.models.LocalizedItemCacheRates
+import io.flow.localized.item.cache.v0.models.json._
 import io.flow.reference.Currencies
 import play.api.libs.json.Json
 
@@ -16,7 +17,7 @@ private[this] trait RateProvider {
 }
 
 private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
-  extends SyncCacheImpl[(String, String), BigDecimal] with CacheConfiguration with RateProvider {
+  extends SyncCacheImpl[RateKey, BigDecimal] with CacheConfiguration with RateProvider {
 
   import RatesCacheImpl._
 
@@ -28,7 +29,7 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
     super.get(buildKey(base, target))
   }
 
-  override def getSourceObjects: Future[Iterable[((String, String), BigDecimal)]] = {
+  override def getSourceObjects: Future[Iterable[(RateKey, BigDecimal)]] = {
     getRates().map { optionalRates =>
       optionalRates
         .map(_.rates.map(rate => buildKey(rate.base, rate.target) -> rate.value))
@@ -52,10 +53,13 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
     Currencies.find(currencyCode).map(_.iso42173).getOrElse(currencyCode).toLowerCase
   }
 
-  private def buildKey(base: String, target: String) = (format(base), format(target))
+  private def buildKey(base: String, target: String): RateKey = (format(base), format(target))
 
 }
 
 object RatesCacheImpl {
+
+  type RateKey = (String, String)
+
   private val RatesKey = "rates"
 }

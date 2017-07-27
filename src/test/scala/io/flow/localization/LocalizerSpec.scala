@@ -1,9 +1,10 @@
 package io.flow.localization
 
-import io.flow.localized.items.cache.v0.models._
-import io.flow.localized.items.cache.v0.models.json._
+import io.flow.catalog.v0.models.LocalizedItemPrice
+import io.flow.common.v0.models.{Price, PriceWithBase}
+import io.flow.localized.item.cache.v0.models._
+import io.flow.localized.item.cache.v0.models.json._
 import io.flow.reference.data.{Countries, Currencies}
-import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -20,91 +21,78 @@ import scala.concurrent.duration._
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
 
   private val pricing = LocalizedItemCachePricing (
-    price = LocalizedItemCachePrices(
-      local = LocalizedItemCachePrice(
-        currency = "CAD",
-        amount = 50,
-        label = "CA$50.00"
-      ),
-      base = LocalizedItemCachePrice(
+    price = LocalizedItemPrice(
+      currency = "CAD",
+      amount = 50,
+      label = "CA$50.00",
+      base = Price(
         currency = "USD",
         amount = 40,
         label = "$40.00"
-      )
+      ),
+      includes = None
     ),
-    includes = None,
+
     attributes = Map(
-      "msrp" -> LocalizedItemCachePrices(
-        local = LocalizedItemCachePrice(
-          amount = 100,
-          currency = "CAD",
-          label = "CA$100.00"
-        ),
-        base = LocalizedItemCachePrice(
+      "msrp" -> PriceWithBase(
+        amount = 100,
+        currency = "CAD",
+        label = "CA$100.00",
+        base = Some(Price(
           amount = 100,
           currency = "USD",
           label = "$75.00"
-        )
+        ))
       )
     )
   )
 
   private val convertedPricing = LocalizedItemCachePricing (
-    price = LocalizedItemCachePrices(
-      local = LocalizedItemCachePrice(
-        currency = "EUR",
-        amount = 25,
-        label = "EUR25.00"
-      ),
-      base = LocalizedItemCachePrice(
+    price = LocalizedItemPrice(
+      currency = "EUR",
+      amount = 25,
+      label = "EUR25.00",
+      base = Price(
         currency = "USD",
         amount = 40,
         label = "$40.00"
       )
     ),
-    includes = None,
     attributes = Map(
-      "msrp" -> LocalizedItemCachePrices(
-        local = LocalizedItemCachePrice(
-          amount = 50,
-          currency = "EUR",
-          label = "EUR50.00"
-        ),
-        base = LocalizedItemCachePrice(
+      "msrp" -> PriceWithBase(
+        amount = 50,
+        currency = "EUR",
+        label = "EUR50.00",
+        base = Some(Price(
           amount = 100,
           currency = "USD",
           label = "$75.00"
-        )
+        ))
       )
     )
   )
 
   private val convertedPricingAfterResfresh = LocalizedItemCachePricing (
-    price = LocalizedItemCachePrices(
-      local = LocalizedItemCachePrice(
-        currency = "EUR",
-        amount = 5,
-        label = "EUR5.00"
-      ),
-      base = LocalizedItemCachePrice(
+    price = LocalizedItemPrice(
+      currency = "EUR",
+      amount = 5,
+      label = "EUR5.00",
+      base = Price(
         currency = "USD",
         amount = 40,
         label = "$40.00"
       )
     ),
-    includes = None,
     attributes = Map(
-      "msrp" -> LocalizedItemCachePrices(
-        local = LocalizedItemCachePrice(
-          amount = 10,
-          currency = "EUR",
-          label = "EUR10.00"
-        ),
-        base = LocalizedItemCachePrice(
+      "msrp" -> PriceWithBase(
+        amount = 10,
+        currency = "EUR",
+        label = "EUR10.00",
+        base = Some(Price(
           amount = 100,
           currency = "USD",
           label = "$75.00"
-        )
+        ))
       )
     )
   )
@@ -170,18 +158,6 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val key = s"country-$country:$itemNumber"
       val value: String = Json.toJson(pricing).toString
-
-      val rates = LocalizedItemCacheRates(
-        rates = Seq(
-          LocalizedItemCacheRate(
-            id = "",
-            base = Currencies.Cad.iso42173,
-            target = Currencies.Eur.iso42173,
-            value = 0.5,
-            effectiveAt = DateTime.now
-          )
-        )
-      )
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))

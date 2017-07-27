@@ -1,16 +1,17 @@
 package io.flow.localization
 
-import io.flow.localized.items.cache.v0.models.{LocalizedItemCacheRate, LocalizedItemCacheRates}
-import io.flow.localized.items.cache.v0.models.json._
+import io.flow.currency.v0.models.Rate
+import io.flow.localized.item.cache.v0.models.LocalizedItemCacheRates
+import io.flow.localized.item.cache.v0.models.json._
 import io.flow.reference.data.Currencies
 import org.joda.time.DateTime
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
+import org.scalatest.concurrent.Eventually
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import org.mockito.Mockito._
-import org.mockito.ArgumentMatchers._
-import org.mockito.ArgumentMatchers
-import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -18,7 +19,7 @@ import scala.concurrent.duration._
 
 class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
 
-  val firstRate = LocalizedItemCacheRate(
+  val firstRate = Rate(
     id = "",
     base = Currencies.Cad.iso42173,
     target = Currencies.Eur.iso42173,

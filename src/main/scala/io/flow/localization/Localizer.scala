@@ -3,8 +3,10 @@ package io.flow.localization
 import javax.inject.Inject
 
 import com.redis.RedisClientPool
-import io.flow.localized.items.cache.v0.models.json._
-import io.flow.localized.items.cache.v0.models.{LocalizedItemCachePrice, LocalizedItemCachePrices, LocalizedItemCachePricing}
+import io.flow.catalog.v0.models.LocalizedItemPrice
+import io.flow.common.v0.models.PriceWithBase
+import io.flow.localized.item.cache.v0.models.LocalizedItemCachePricing
+import io.flow.localized.item.cache.v0.models.json._
 import io.flow.reference.Countries
 import play.api.libs.json.Json
 
@@ -143,7 +145,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   }
 
   override def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice = {
-    val localCurrency = pricing.salePrice.local.currency
+    val localCurrency = pricing.salePrice.currency
     if (localCurrency == targetCurrency) {
       pricing
     } else {
@@ -161,32 +163,41 @@ object LocalizerImpl {
 
   private def convertWithRate(pricing: FlowSkuPrice, targetCurrency: String, rate: BigDecimal): FlowSkuPrice = {
     FlowSkuPrice(
-      salePrice = convertPrices(pricing.salePrice, targetCurrency, rate),
-      msrpPrice = pricing.msrpPrice.map(convertPrices(_, targetCurrency, rate)),
-      basePrice = pricing.basePrice.map(convertPrices(_, targetCurrency, rate)),
-      shippingSurcharge = pricing.shippingSurcharge.map(convertPrices(_, targetCurrency, rate)),
-      includes = pricing.includes
+      salePrice = convertLocalizedItemPrice(pricing.salePrice, targetCurrency, rate),
+      msrpPrice = pricing.msrpPrice.map(convertPrice(_, targetCurrency, rate)),
+      basePrice = pricing.basePrice.map(convertPrice(_, targetCurrency, rate)),
+      shippingSurcharge = pricing.shippingSurcharge.map(convertPrice(_, targetCurrency, rate))
     )
   }
 
-  private def convertPrices(prices: LocalizedItemCachePrices, targetCurrency: String, rate: BigDecimal): LocalizedItemCachePrices = {
-    LocalizedItemCachePrices(
-      local = convertPrice(prices.local, targetCurrency, rate),
-      base = prices.base
-    )
-  }
-
-  private def convertPrice(price: LocalizedItemCachePrice, targetCurrency: String, rate: BigDecimal): LocalizedItemCachePrice = {
-    val newAmount = price.amount * rate
+  private def convertLocalizedItemPrice(price: LocalizedItemPrice, targetCurrency: String, rate: BigDecimal): LocalizedItemPrice = {
+    val newAmount = (price.amount * rate).toDouble
 
     // TODO: we need the target locale here, not the default one!
     val format = java.text.NumberFormat.getCurrencyInstance()
     format.setCurrency(java.util.Currency.getInstance(targetCurrency))
 
-    LocalizedItemCachePrice(
+    LocalizedItemPrice(
       currency = targetCurrency,
       amount = newAmount,
-      label = format.format(newAmount.toDouble)
+      label = format.format(newAmount),
+      base = price.base,
+      includes = price.includes
+    )
+  }
+
+  private def convertPrice(price: PriceWithBase, targetCurrency: String, rate: BigDecimal): PriceWithBase = {
+    val newAmount = (price.amount * rate).toDouble
+
+    // TODO: we need the target locale here, not the default one!
+    val format = java.text.NumberFormat.getCurrencyInstance()
+    format.setCurrency(java.util.Currency.getInstance(targetCurrency))
+
+    PriceWithBase(
+      currency = targetCurrency,
+      amount = newAmount,
+      label = format.format(newAmount),
+      base = price.base
     )
   }
 
