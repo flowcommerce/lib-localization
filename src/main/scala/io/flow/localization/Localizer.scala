@@ -18,12 +18,18 @@ trait Localizer {
     * the default currency for that country.
     * 
     * @param country country in the ISO 3166-3 format
-    * @param itemNumber the id of the item
+    * @param itemNumbers the item numbers to localize
     * @return the localized pricing of the specified item for the specified country
     */
+  def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
+    implicit executionContext: ExecutionContext
+  ): Future[List[FlowSkuPrice]]
+
   def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]]
+  ): Future[Option[FlowSkuPrice]] = {
+    getSkuPricesByCountry(country, List(itemNumber)).map(_.headOption)
+  }
 
   /**
     * Returns the localized pricing of the specified item for the specified country,
@@ -50,13 +56,18 @@ trait Localizer {
   /**
     * Returns localized pricing of the specified item for the specified experience
     * @param experienceKey the id of the experience
-    * @param itemNumber the id of the item
+    * @param itemNumbers the item numbers to localize
     * @return the localized pricing of the specified item for the specified experience
     */
+  def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
+    implicit executionContext: ExecutionContext
+  ): Future[List[FlowSkuPrice]]
+
   def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]]
-
+  ): Future[Option[FlowSkuPrice]] = {
+    getSkuPricesByExperience(experienceKey, List(itemNumber)).map(_.headOption)
+  }
 
   /**
     * Returns localized pricing of the specified item for the specified experience
@@ -99,16 +110,24 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   import LocalizerImpl._
 
-  override def getSkuPriceByCountry(country: String, itemNumber: String)(
+  override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getPricing(CountryKey(country = country, itemNumber = itemNumber))
+  ): Future[List[FlowSkuPrice]] = {
+    Future.sequence {
+      itemNumbers.map { itemNumber =>
+        getPricing(CountryKey(country = country, itemNumber = itemNumber))
+      }
+    }.map(_.toList.flatten)
   }
 
-  override def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
+  override def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
+  ): Future[List[FlowSkuPrice]] = {
+    Future.sequence {
+      itemNumbers.map { itemNumber =>
+        getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
+      }
+    }.map(_.toList.flatten)
   }
 
   private def getPricing(keyProvider: KeyProvider)(
