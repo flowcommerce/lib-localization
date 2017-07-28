@@ -2,11 +2,13 @@ package io.flow.localization
 
 import javax.inject.Inject
 
-import com.redis.RedisClientPool
-import io.flow.localized.items.cache.v0.models.json._
-import io.flow.localized.items.cache.v0.models.{LocalizedItemCachePrice, LocalizedItemCachePrices, LocalizedItemCachePricing}
+import io.flow.catalog.v0.models.LocalizedItemPrice
+import io.flow.common.v0.models.PriceWithBase
+import io.flow.item.v0.models.LocalItem
+import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
 import play.api.libs.json.Json
+import redis.RedisClientPool
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,20 +18,18 @@ trait Localizer {
   /**
     * Returns the localized pricing of the specified item for the specified country, using
     * the default currency for that country.
-    * 
+    *
     * @param country country in the ISO 3166-3 format
     * @param itemNumbers the item numbers to localize
     * @return the localized pricing of the specified item for the specified country
     */
   def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]]
+  ): Future[List[Option[FlowSkuPrice]]]
 
   def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getSkuPricesByCountry(country, List(itemNumber)).map(_.headOption)
-  }
+  ): Future[Option[FlowSkuPrice]]
 
   /**
     * Returns the localized pricing of the specified item for the specified country,
@@ -61,13 +61,11 @@ trait Localizer {
     */
   def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]]
+  ): Future[List[Option[FlowSkuPrice]]]
 
   def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getSkuPricesByExperience(experienceKey, List(itemNumber)).map(_.headOption)
-  }
+  ): Future[Option[FlowSkuPrice]]
 
   /**
     * Returns localized pricing of the specified item for the specified experience
@@ -81,6 +79,14 @@ trait Localizer {
   ): Future[Option[FlowSkuPrice]] = {
     getSkuPriceByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)))
   }
+
+  /**
+    * Returns true if the specified country is enabled, false otherwise
+    * @param country country in the ISO 3166-3 format
+    * @return true if the specified country is enabled, false otherwise
+    */
+  def isEnabled(country: String): Boolean
+
 }
 
 object Localizer {
@@ -103,52 +109,76 @@ object Localizer {
     val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
     rateProvider.start()
 
+    val availableCountriesProvider = new AvailableCountriesProviderCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
+    availableCountriesProvider.start()
+
     new LocalizerImpl(
       localizerClient = localizerClient,
-      rateProvider = rateProvider
+      rateProvider = rateProvider,
+      availableCountriesProvider = availableCountriesProvider
     )
   }
 
 }
 
-class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: RateProvider) extends Localizer {
+class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: RateProvider,
+                               availableCountriesProvider: AvailableCountriesProvider) extends Localizer {
 
   import LocalizerImpl._
 
+  override def getSkuPriceByCountry(country: String, itemNumber: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[Option[FlowSkuPrice]] = {
+    val key = CountryKey(country, itemNumber)
+    getPricing(key)
+  }
+
+  override def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[Option[FlowSkuPrice]] = {
+    val key = ExperienceKey(experienceKey, itemNumber)
+    getPricing(key)
+  }
+
+
   override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]] = {
-    Future.sequence {
-      itemNumbers.map { itemNumber =>
-        getPricing(CountryKey(country = country, itemNumber = itemNumber))
-      }
-    }.map(_.toList.flatten)
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    val keys = itemNumbers.map(CountryKey(country, _))
+    getPricings(keys)
   }
 
   override def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]] = {
-    Future.sequence {
-      itemNumbers.map { itemNumber =>
-        getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
-      }
-    }.map(_.toList.flatten)
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    val keys = itemNumbers.map(ExperienceKey(experienceKey, _))
+    getPricings(keys)
+  }
+
+  private def getPricings(keyProviders: Iterable[KeyProvider])(
+    implicit executionContext: ExecutionContext
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    localizerClient.mget(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
+      optionalPrices.map(toFlowSkuPrice).toList
+    }
   }
 
   private def getPricing(keyProvider: KeyProvider)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    localizerClient.get(keyProvider.getKey).map { optionalPrice =>
-      optionalPrice.map { js =>
-        FlowSkuPrice(
-          Json.parse(js).as[LocalizedItemCachePricing]
-        )
-      }
+    localizerClient.get(keyProvider.getKey).map(toFlowSkuPrice)
+  }
+
+  private def toFlowSkuPrice(optionalPrice: Option[String]) = {
+    optionalPrice.map { js =>
+      FlowSkuPrice(
+        Json.parse(js).as[LocalItem].pricing
+      )
     }
   }
 
   override def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice = {
-    val localCurrency = pricing.salePrice.local.currency
+    val localCurrency = pricing.salePrice.currency
     if (localCurrency == targetCurrency) {
       pricing
     } else {
@@ -156,9 +186,11 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
         .get(localCurrency, targetCurrency)
         .map(rate => convertWithRate(pricing, targetCurrency, rate))
         // TODO: should we fall back to the original pricing instead of an error?
-        .getOrElse(sys.error(s"Cannot find conversino rate for $localCurrency -> $targetCurrency"))
+        .getOrElse(sys.error(s"Cannot find conversion rate for $localCurrency -> $targetCurrency"))
     }
   }
+
+  override def isEnabled(country: String): Boolean = availableCountriesProvider.isEnabled(country)
 
 }
 
@@ -166,32 +198,41 @@ object LocalizerImpl {
 
   private def convertWithRate(pricing: FlowSkuPrice, targetCurrency: String, rate: BigDecimal): FlowSkuPrice = {
     FlowSkuPrice(
-      salePrice = convertPrices(pricing.salePrice, targetCurrency, rate),
-      msrpPrice = pricing.msrpPrice.map(convertPrices(_, targetCurrency, rate)),
-      basePrice = pricing.basePrice.map(convertPrices(_, targetCurrency, rate)),
-      shippingSurcharge = pricing.shippingSurcharge.map(convertPrices(_, targetCurrency, rate)),
-      includes = pricing.includes
+      salePrice = convertLocalizedItemPrice(pricing.salePrice, targetCurrency, rate),
+      msrpPrice = pricing.msrpPrice.map(convertPrice(_, targetCurrency, rate)),
+      basePrice = pricing.basePrice.map(convertPrice(_, targetCurrency, rate)),
+      shippingSurcharge = pricing.shippingSurcharge.map(convertPrice(_, targetCurrency, rate))
     )
   }
 
-  private def convertPrices(prices: LocalizedItemCachePrices, targetCurrency: String, rate: BigDecimal): LocalizedItemCachePrices = {
-    LocalizedItemCachePrices(
-      local = convertPrice(prices.local, targetCurrency, rate),
-      base = prices.base
-    )
-  }
-
-  private def convertPrice(price: LocalizedItemCachePrice, targetCurrency: String, rate: BigDecimal): LocalizedItemCachePrice = {
-    val newAmount = price.amount * rate
+  private def convertLocalizedItemPrice(price: LocalizedItemPrice, targetCurrency: String, rate: BigDecimal): LocalizedItemPrice = {
+    val newAmount = (price.amount * rate).toDouble
 
     // TODO: we need the target locale here, not the default one!
     val format = java.text.NumberFormat.getCurrencyInstance()
     format.setCurrency(java.util.Currency.getInstance(targetCurrency))
 
-    LocalizedItemCachePrice(
+    LocalizedItemPrice(
       currency = targetCurrency,
       amount = newAmount,
-      label = format.format(newAmount.toDouble)
+      label = format.format(newAmount),
+      base = price.base,
+      includes = price.includes
+    )
+  }
+
+  private def convertPrice(price: PriceWithBase, targetCurrency: String, rate: BigDecimal): PriceWithBase = {
+    val newAmount = (price.amount * rate).toDouble
+
+    // TODO: we need the target locale here, not the default one!
+    val format = java.text.NumberFormat.getCurrencyInstance()
+    format.setCurrency(java.util.Currency.getInstance(targetCurrency))
+
+    PriceWithBase(
+      currency = targetCurrency,
+      amount = newAmount,
+      label = format.format(newAmount),
+      base = price.base
     )
   }
 

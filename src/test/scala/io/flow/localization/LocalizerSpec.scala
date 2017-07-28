@@ -1,10 +1,10 @@
 package io.flow.localization
 
-import io.flow.localized.items.cache.v0.models._
-import io.flow.localized.items.cache.v0.models.json._
+import io.flow.catalog.v0.models.{LocalizedItemPrice, SubcatalogItemStatus}
+import io.flow.common.v0.models.{CatalogItemReference, ExperienceSummary, Price, PriceWithBase}
+import io.flow.item.v0.models.json._
+import io.flow.item.v0.models.{LocalItem, LocalItemPricing}
 import io.flow.reference.data.{Countries, Currencies}
-import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -19,92 +19,88 @@ import scala.concurrent.duration._
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
 
-  private val pricing = LocalizedItemCachePricing (
-    price = LocalizedItemCachePrices(
-      local = LocalizedItemCachePrice(
+  private def createItem(pricing: LocalItemPricing) = {
+    LocalItem(
+      id = "",
+      experience = ExperienceSummary("", "", ""),
+      item = CatalogItemReference("", ""),
+      pricing = pricing,
+      status = SubcatalogItemStatus.Included
+    )
+  }
+
+  private val pricing50Cad = LocalItemPricing (
+    price = LocalizedItemPrice(
+      currency = "CAD",
+      amount = 50,
+      label = "CA$50.00",
+      base = Price(
+        currency = "USD",
+        amount = 40,
+        label = "$40.00"
+      ),
+      includes = None
+    ),
+    attributes = Map(
+      "msrp" -> PriceWithBase(
+        amount = 100,
         currency = "CAD",
+        label = "CA$100.00",
+        base = Some(Price(
+          amount = 100,
+          currency = "USD",
+          label = "$75.00"
+        ))
+      )
+    )
+  )
+
+  private val pricing25Eur = LocalItemPricing (
+    price = LocalizedItemPrice(
+      currency = "EUR",
+      amount = 25,
+      label = "EUR25.00",
+      base = Price(
+        currency = "USD",
+        amount = 40,
+        label = "$40.00"
+      )
+    ),
+    attributes = Map(
+      "msrp" -> PriceWithBase(
         amount = 50,
-        label = "CA$50.00"
-      ),
-      base = LocalizedItemCachePrice(
-        currency = "USD",
-        amount = 40,
-        label = "$40.00"
-      )
-    ),
-    includes = None,
-    attributes = Map(
-      "msrp" -> LocalizedItemCachePrices(
-        local = LocalizedItemCachePrice(
-          amount = 100,
-          currency = "CAD",
-          label = "CA$100.00"
-        ),
-        base = LocalizedItemCachePrice(
+        currency = "EUR",
+        label = "EUR50.00",
+        base = Some(Price(
           amount = 100,
           currency = "USD",
           label = "$75.00"
-        )
+        ))
       )
     )
   )
 
-  private val convertedPricing = LocalizedItemCachePricing (
-    price = LocalizedItemCachePrices(
-      local = LocalizedItemCachePrice(
-        currency = "EUR",
-        amount = 25,
-        label = "EUR25.00"
-      ),
-      base = LocalizedItemCachePrice(
+  private val pricing5Eur = LocalItemPricing (
+    price = LocalizedItemPrice(
+      currency = "EUR",
+      amount = 5,
+      label = "EUR5.00",
+      base = Price(
         currency = "USD",
         amount = 40,
         label = "$40.00"
       )
     ),
-    includes = None,
     attributes = Map(
-      "msrp" -> LocalizedItemCachePrices(
-        local = LocalizedItemCachePrice(
-          amount = 50,
-          currency = "EUR",
-          label = "EUR50.00"
-        ),
-        base = LocalizedItemCachePrice(
-          amount = 100,
-          currency = "USD",
-          label = "$75.00"
-        )
-      )
-    )
-  )
-
-  private val convertedPricingAfterResfresh = LocalizedItemCachePricing (
-    price = LocalizedItemCachePrices(
-      local = LocalizedItemCachePrice(
+      "msrp" -> PriceWithBase(
+        amount = 10,
         currency = "EUR",
-        amount = 5,
-        label = "EUR5.00"
-      ),
-      base = LocalizedItemCachePrice(
-        currency = "USD",
-        amount = 40,
-        label = "$40.00"
-      )
-    ),
-    includes = None,
-    attributes = Map(
-      "msrp" -> LocalizedItemCachePrices(
-        local = LocalizedItemCachePrice(
-          amount = 10,
-          currency = "EUR",
-          label = "EUR10.00"
-        ),
-        base = LocalizedItemCachePrice(
+        label = "EUR10.00",
+        base = Some(Price(
           amount = 100,
           currency = "USD",
           label = "$75.00"
-        )
+        ))
       )
     )
   )
@@ -118,20 +114,20 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByCountry(country, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
 
         // Verify can retrieve by three characters country code
         whenReady(localizer.getSkuPriceByCountry("CAN", itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
       }
     }
@@ -143,20 +139,20 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider])
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
 
         // Verify case insensitive
         whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
       }
     }
@@ -169,28 +165,16 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      val rates = LocalizedItemCacheRates(
-        rates = Seq(
-          LocalizedItemCacheRate(
-            id = "",
-            base = Currencies.Cad.iso42173,
-            target = Currencies.Eur.iso42173,
-            value = 0.5,
-            effectiveAt = DateTime.now
-          )
-        )
-      )
-
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricing))
+          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
         }
       }
     }
@@ -203,21 +187,21 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricing))
+          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
         }
       }
     }
 
-    "rates should refresh" in {
+    "update rates" in {
       val localizerClient = mock[LocalizerClient]
       val rateProvider = mock[RateProvider]
 
@@ -225,27 +209,40 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any()))
         .thenReturn(Some(BigDecimal(0.5)))
         .thenReturn(Some(BigDecimal(0.1)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider)
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(1.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricing))
+          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
         }
       }
 
       eventually(Timeout(2.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricingAfterResfresh))
+          _ shouldBe Some(FlowSkuPrice(pricing5Eur))
         }
       }
 
+    }
+
+    "return if a country is enabled" in {
+      val localizerClient = mock[LocalizerClient]
+
+      val availableCountriesProvider = mock[AvailableCountriesProvider]
+      when(availableCountriesProvider.isEnabled("FRA")).thenReturn(true)
+      when(availableCountriesProvider.isEnabled("CAN")).thenReturn(false)
+
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], availableCountriesProvider)
+
+      localizer.isEnabled("FRA") shouldBe true
+      localizer.isEnabled("CAN") shouldBe false
     }
 
   }
