@@ -5,6 +5,7 @@ import javax.inject.Inject
 import redis.RedisClientPool
 
 import scala.concurrent.Future
+import redis.ByteStringDeserializer._
 
 trait LocalizerClient {
 
