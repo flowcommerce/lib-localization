@@ -1,6 +1,30 @@
 code:
   flow:
-    localized-items-cache:
+    item:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    published-event:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    common:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    catalog:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    currency:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    price:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    error:
       version: latest
       generators:
         play_2_x_standalone_json: src/main/scala/generated
