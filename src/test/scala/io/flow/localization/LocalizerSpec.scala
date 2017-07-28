@@ -1,8 +1,8 @@
 package io.flow.localization
 
-import io.flow.catalog.v0.models.LocalizedItemPrice
-import io.flow.common.v0.models.{Price, PriceWithBase}
-import io.flow.item.v0.models._
+import io.flow.catalog.v0.models.{LocalizedItemPrice, SubcatalogItemStatus}
+import io.flow.common.v0.models.{CatalogItemReference, ExperienceSummary, Price, PriceWithBase}
+import io.flow.item.v0.models.{LocalItem, LocalItemPricing}
 import io.flow.item.v0.models.json._
 import io.flow.reference.data.{Countries, Currencies}
 import org.mockito.ArgumentMatchers
@@ -20,7 +20,17 @@ import scala.concurrent.duration._
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
 
-  private val pricing = LocalizedItemCachePricing (
+  private def createItem(pricing: LocalItemPricing) = {
+    LocalItem(
+      id = "",
+      experience = ExperienceSummary("", "", ""),
+      item = CatalogItemReference("", ""),
+      pricing = pricing,
+      status = SubcatalogItemStatus.Included
+    )
+  }
+
+  private val pricing50Cad = LocalItemPricing (
     price = LocalizedItemPrice(
       currency = "CAD",
       amount = 50,
@@ -32,7 +42,6 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       ),
       includes = None
     ),
-
     attributes = Map(
       "msrp" -> PriceWithBase(
         amount = 100,
@@ -47,7 +56,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     )
   )
 
-  private val convertedPricing = LocalizedItemCachePricing (
+  private val pricing25Eur = LocalItemPricing (
     price = LocalizedItemPrice(
       currency = "EUR",
       amount = 25,
@@ -72,7 +81,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     )
   )
 
-  private val convertedPricingAfterResfresh = LocalizedItemCachePricing (
+  private val pricing5Eur = LocalItemPricing (
     price = LocalizedItemPrice(
       currency = "EUR",
       amount = 5,
@@ -106,7 +115,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
 
@@ -114,12 +123,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByCountry(country, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
 
         // Verify can retrieve by three characters country code
         whenReady(localizer.getSkuPriceByCountry("CAN", itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
       }
     }
@@ -131,7 +140,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
 
@@ -139,12 +148,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
 
         // Verify case insensitive
         whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing))
+          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
         }
       }
     }
@@ -157,7 +166,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
@@ -166,7 +175,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricing))
+          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
         }
       }
     }
@@ -179,7 +188,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
@@ -188,12 +197,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricing))
+          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
         }
       }
     }
 
-    "rates should refresh" in {
+    "update rates" in {
       val localizerClient = mock[LocalizerClient]
       val rateProvider = mock[RateProvider]
 
@@ -201,7 +210,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(pricing).toString
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any()))
@@ -212,13 +221,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(1.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricing))
+          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
         }
       }
 
       eventually(Timeout(2.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(convertedPricingAfterResfresh))
+          _ shouldBe Some(FlowSkuPrice(pricing5Eur))
         }
       }
 

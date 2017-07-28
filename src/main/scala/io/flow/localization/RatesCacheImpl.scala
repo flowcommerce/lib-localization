@@ -1,9 +1,8 @@
 package io.flow.localization
 
-import io.flow.currency.v0.models.Rate
 import io.flow.localization.RatesCacheImpl.RateKey
-import io.flow.item.v0.models.Rate
-import io.flow.item.v0.models.json._
+import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
+import io.flow.published.event.v0.models.json._
 import io.flow.reference.Currencies
 import play.api.libs.json.Json
 
@@ -15,9 +14,8 @@ private[this] trait RateProvider {
 
 }
 
-// Jean: Not sure if we should use Seq[Rate] here or create a type for it
 private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
-  extends LocalizerClientCache[Seq[Rate], RateKey, BigDecimal] with RateProvider {
+  extends LocalizerClientCache[Rates, RateKey, BigDecimal] with RateProvider {
 
   import RatesCacheImpl._
 
@@ -25,15 +23,15 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
     super.get(buildKey(base, target))
   }
 
-  override def retrieveData(): Future[Option[Seq[Rate]]] = {
+  override def retrieveData(): Future[Option[Rates]] = {
     localizerClient.get(RatesKey).map { optionalJson =>
       optionalJson.map { js =>
-        Json.parse(js).as[Seq[Rate]]
+        Json.parse(js).as[Rates]
       }
     }
   }
 
-  override def toKeyValues(optionalRates: Option[Seq[Rate]]): Iterable[((String, String), BigDecimal)] = {
+  override def toKeyValues(optionalRates: Option[Rates]): Iterable[((String, String), BigDecimal)] = {
     optionalRates
       .map(_.rates.map(rate => buildKey(rate.base, rate.target) -> rate.value))
       .getOrElse(sys.error(s"Rates cannot be found - expected key named '$RatesKey"))

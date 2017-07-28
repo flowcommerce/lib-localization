@@ -1,8 +1,8 @@
 package io.flow.localization
 
 import io.flow.currency.v0.models.Rate
-import io.flow.item.v0.models.LocalizedItemCacheRates
-import io.flow.item.v0.models.json._
+import io.flow.published.event.v0.models.OrganizationRatesData
+import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers
@@ -27,8 +27,8 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     effectiveAt = DateTime.now
   )
 
-  val firstRates = LocalizedItemCacheRates(rates = Seq(firstRate))
-  val secondRates = LocalizedItemCacheRates(rates = Seq(firstRate.copy(value = 0.1)))
+  val firstRates = OrganizationRatesData(rates = Seq(firstRate))
+  val secondRates = OrganizationRatesData(rates = Seq(firstRate.copy(value = 0.1)))
 
   "RatesCache" should {
 

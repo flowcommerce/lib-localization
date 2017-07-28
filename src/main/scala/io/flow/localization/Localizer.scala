@@ -25,13 +25,11 @@ trait Localizer {
     */
   def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]]
+  ): Future[List[Option[FlowSkuPrice]]]
 
   def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getSkuPricesByCountry(country, List(itemNumber)).map(_.headOption)
-  }
+  ): Future[Option[FlowSkuPrice]]
 
   /**
     * Returns the localized pricing of the specified item for the specified country,
@@ -63,13 +61,11 @@ trait Localizer {
     */
   def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]]
+  ): Future[List[Option[FlowSkuPrice]]]
 
   def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getSkuPricesByExperience(experienceKey, List(itemNumber)).map(_.headOption)
-  }
+  ): Future[Option[FlowSkuPrice]]
 
   /**
     * Returns localized pricing of the specified item for the specified experience
@@ -125,35 +121,54 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   import LocalizerImpl._
 
+  override def getSkuPriceByCountry(country: String, itemNumber: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[Option[FlowSkuPrice]] = {
+    val key = CountryKey(country, itemNumber)
+    getPricing(key)
+  }
+
+  override def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[Option[FlowSkuPrice]] = {
+    val key = ExperienceKey(experienceKey, itemNumber)
+    getPricing(key)
+  }
+
+
   override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]] = {
-    Future.sequence {
-      itemNumbers.map { itemNumber =>
-        getPricing(CountryKey(country = country, itemNumber = itemNumber))
-      }
-    }.map(_.toList.flatten)
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    val keys = itemNumbers.map(CountryKey(country, _))
+    getPricings(keys)
   }
 
   override def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[List[FlowSkuPrice]] = {
-    Future.sequence {
-      itemNumbers.map { itemNumber =>
-        getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
-      }
-    }.map(_.toList.flatten)
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    val keys = itemNumbers.map(ExperienceKey(experienceKey, _))
+    getPricings(keys)
+  }
+
+  private def getPricings(keyProviders: Iterable[KeyProvider])(
+    implicit executionContext: ExecutionContext
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    localizerClient.mget(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
+      optionalPrices.map(toFlowSkuPrice)
+    }
   }
 
   private def getPricing(keyProvider: KeyProvider)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    localizerClient.get(keyProvider.getKey).map { optionalPrice =>
-      optionalPrice.map { js =>
-        FlowSkuPrice(
-          Json.parse(js).as[LocalItem].pricing
-        )
-      }
+    localizerClient.get(keyProvider.getKey).map(toFlowSkuPrice)
+  }
+
+  private def toFlowSkuPrice(optionalPrice: Option[String]) = {
+    optionalPrice.map { js =>
+      FlowSkuPrice(
+        Json.parse(js).as[LocalItem].pricing
+      )
     }
   }
 
@@ -166,13 +181,13 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
         .get(localCurrency, targetCurrency)
         .map(rate => convertWithRate(pricing, targetCurrency, rate))
         // TODO: should we fall back to the original pricing instead of an error?
-        .getOrElse(sys.error(s"Cannot find conversino rate for $localCurrency -> $targetCurrency"))
+        .getOrElse(sys.error(s"Cannot find conversion rate for $localCurrency -> $targetCurrency"))
     }
   }
 
   override def isEnabled(country: String): Boolean = availableCountriesProvider.isEnabled(country)
 
-}
+  }
 
 object LocalizerImpl {
 

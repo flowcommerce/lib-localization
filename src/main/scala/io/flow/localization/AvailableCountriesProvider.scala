@@ -1,13 +1,12 @@
 package io.flow.localization
 
-import io.flow.bulk.event.v0.models.OrganizationCountries
-import io.flow.bulk.event.v0.models.json._
+import io.flow.published.event.v0.models.{OrganizationCountriesData => CountriesData}
+import io.flow.published.event.v0.models.json._
 import io.flow.reference.Countries
 import io.flow.reference.v0.models.Country
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
-
 
 trait AvailableCountriesProvider {
 
@@ -23,25 +22,32 @@ private[localization] class AvailableCountriesProviderImpl(localizerClient: Loca
   override def retrieveData(): Future[Option[Seq[Country]]] = {
     localizerClient.get(OrganizationCountriesRedisKey).map { optionalJson =>
       optionalJson.map { js =>
-        Json.parse(js).as[OrganizationCountries].available.flatMap(Countries.find)
+        Json.parse(js).as[CountriesData].available.flatMap(Countries.find)
       }
     }
   }
 
   override def toKeyValues(optionalAvailableCountries: Option[Seq[Country]]): Iterable[(String, Object)] = {
-    // Jean: Not sure how to update this...
     optionalAvailableCountries
-      .map(_.availableCountries.map(_ -> AvailableValue))
+      .map(_.flatMap(c => buildCountryKeys(c).map(_ -> Present)))
       .getOrElse(sys.error(s"Available countries cannot be found - expected key named '$OrganizationCountriesRedisKey"))
   }
 
-  override def isEnabled(country: String): Boolean = super.get(country).isDefined
+  private def buildCountryKeys(country: Country): Seq[String] = {
+    Seq(
+      country.iso31663.toLowerCase,
+      country.iso31662.toLowerCase,
+      country.name
+    )
+  }
+
+  override def isEnabled(country: String): Boolean = super.get(country.toLowerCase).isDefined
 }
 
 object AvailableCountriesProviderImpl {
 
   private val OrganizationCountriesRedisKey = "organization_countries"
 
-  private val AvailableValue = new Object()
+  private val Present = new Object()
 
 }
