@@ -88,6 +88,11 @@ object Localizer {
   private val DefaultRatesRefreshPeriod = FiniteDuration(1, MINUTES)
 
   /**
+    * Creates a mock [[Localizer]] backed by an in memory database
+    */
+  def mock(): Localizer = ???
+
+  /**
     * Creates a new [[Localizer]] backed by [[RedisLocalizerClient]]
     * @param redisClientPool the client pool to use to connect to redis
     * @return a new [[Localizer]] backed by [[RedisLocalizerClient]]
