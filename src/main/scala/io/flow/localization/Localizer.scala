@@ -5,7 +5,7 @@ import javax.inject.Inject
 import com.redis.RedisClientPool
 import io.flow.catalog.v0.models.LocalizedItemPrice
 import io.flow.common.v0.models.PriceWithBase
-import io.flow.item.v0.models.LocalizedItemCachePricing
+import io.flow.item.v0.models.LocalItem
 import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
 import play.api.libs.json.Json
@@ -151,7 +151,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
     localizerClient.get(keyProvider.getKey).map { optionalPrice =>
       optionalPrice.map { js =>
         FlowSkuPrice(
-          Json.parse(js).as[LocalizedItemCachePricing]
+          Json.parse(js).as[LocalItem].pricing
         )
       }
     }

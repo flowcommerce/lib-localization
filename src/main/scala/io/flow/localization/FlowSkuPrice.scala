@@ -2,8 +2,7 @@ package io.flow.localization
 
 import io.flow.catalog.v0.models.LocalizedItemPrice
 import io.flow.common.v0.models.PriceWithBase
-import io.flow.item.v0.models.LocalizedItemCachePricing
-
+import io.flow.item.v0.models.LocalItemPricing
 
 /**
   * Represents the local pricing needed for a given sku
@@ -17,7 +16,7 @@ case class FlowSkuPrice(
 
 object FlowSkuPrice {
 
-  def apply(pricing: LocalizedItemCachePricing): FlowSkuPrice = {
+  def apply(pricing: LocalItemPricing): FlowSkuPrice = {
     FlowSkuPrice(
       salePrice = pricing.price,
       msrpPrice = pricing.attributes.get("msrp"),

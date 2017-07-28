@@ -1,6 +1,7 @@
 package io.flow.localization
 
 import io.flow.bulk.event.v0.models.OrganizationCountries
+import io.flow.bulk.event.v0.models.json._
 import io.flow.reference.Countries
 import io.flow.reference.v0.models.Country
 import play.api.libs.json.Json
