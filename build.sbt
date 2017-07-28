@@ -12,7 +12,7 @@ lazy val root = project
       libraryDependencies ++= Seq(
       "com.gilt" %% "gfc-cache" % "0.0.3",
       "com.typesafe.play" %% "play-json" % "2.6.2",
-      "io.flow" %% "lib-reference-scala" % "0.1.26",
+      "io.flow" %% "lib-reference-scala" % "0.1.27",
       "javax.inject" % "javax.inject" % "1",
       "net.debasishg" %% "redisclient" % "3.4",
       "org.mockito" % "mockito-core" % "2.8.47" % "test",
