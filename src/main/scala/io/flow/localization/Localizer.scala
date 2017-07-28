@@ -110,16 +110,24 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   import LocalizerImpl._
 
-  override def getSkuPriceByCountry(country: String, itemNumber: String)(
+  override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getPricing(CountryKey(country = country, itemNumber = itemNumber))
+  ): Future[List[FlowSkuPrice]] = {
+    Future.sequence {
+      itemNumbers.map { itemNumber =>
+        getPricing(CountryKey(country = country, itemNumber = itemNumber))
+      }
+    }.map(_.toList.flatten)
   }
 
-  override def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
+  override def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
+  ): Future[List[FlowSkuPrice]] = {
+    Future.sequence {
+      itemNumbers.map { itemNumber =>
+        getPricing(ExperienceKey(experience = experienceKey, itemNumber = itemNumber))
+      }
+    }.map(_.toList.flatten)
   }
 
   private def getPricing(keyProvider: KeyProvider)(
