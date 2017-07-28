@@ -2,10 +2,9 @@ package io.flow.localization
 
 import io.flow.catalog.v0.models.{LocalizedItemPrice, SubcatalogItemStatus}
 import io.flow.common.v0.models.{CatalogItemReference, ExperienceSummary, Price, PriceWithBase}
-import io.flow.item.v0.models.{LocalItem, LocalItemPricing}
 import io.flow.item.v0.models.json._
+import io.flow.item.v0.models.{LocalItem, LocalItemPricing}
 import io.flow.reference.data.{Countries, Currencies}
-import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -117,7 +116,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val key = s"country-$country:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
@@ -142,7 +141,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val key = s"experience-$experienceKey:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
@@ -168,7 +167,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val key = s"country-$country:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
@@ -190,7 +189,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val key = s"experience-$experienceKey:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
@@ -212,7 +211,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val key = s"country-$country:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
-      when(localizerClient.get(ArgumentMatchers.eq(key))(any())).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any()))
         .thenReturn(Some(BigDecimal(0.5)))
         .thenReturn(Some(BigDecimal(0.1)))

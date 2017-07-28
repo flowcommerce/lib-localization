@@ -5,8 +5,6 @@ import io.flow.published.event.v0.models.OrganizationRatesData
 import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -34,7 +32,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "retrieve the rates" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any()))
+      when(localizerClient.get("rates"))
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
 
       val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
@@ -45,7 +43,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "refresh the rates" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(ArgumentMatchers.eq("rates"))(any()))
+      when(localizerClient.get("rates"))
         // first call with a rate of 0.5
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
         // second call with a rate of 0.1

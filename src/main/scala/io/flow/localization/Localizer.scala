@@ -2,13 +2,13 @@ package io.flow.localization
 
 import javax.inject.Inject
 
-import com.redis.RedisClientPool
 import io.flow.catalog.v0.models.LocalizedItemPrice
 import io.flow.common.v0.models.PriceWithBase
 import io.flow.item.v0.models.LocalItem
 import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
 import play.api.libs.json.Json
+import redis.RedisClientPool
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,7 +18,7 @@ trait Localizer {
   /**
     * Returns the localized pricing of the specified item for the specified country, using
     * the default currency for that country.
-    * 
+    *
     * @param country country in the ISO 3166-3 format
     * @param itemNumbers the item numbers to localize
     * @return the localized pricing of the specified item for the specified country
@@ -154,7 +154,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
     localizerClient.mget(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
-      optionalPrices.map(toFlowSkuPrice)
+      optionalPrices.map(toFlowSkuPrice).toList
     }
   }
 
@@ -187,7 +187,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   override def isEnabled(country: String): Boolean = availableCountriesProvider.isEnabled(country)
 
-  }
+}
 
 object LocalizerImpl {
 

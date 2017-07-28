@@ -6,27 +6,36 @@ scalaVersion in ThisBuild := "2.12.2"
 
 crossScalaVersions := Seq("2.12.2", "2.11.11", "2.10.6")
 
-lazy val root = project
-  .in(file("."))
-  .settings(
-      libraryDependencies ++= Seq(
-      "com.gilt" %% "gfc-cache" % "0.0.3",
-      "com.typesafe.play" %% "play-json" % "2.6.2",
-      "io.flow" %% "lib-reference-scala" % "0.1.26",
-      "javax.inject" % "javax.inject" % "1",
-      "net.debasishg" %% "redisclient" % "3.4",
-      "org.mockito" % "mockito-core" % "2.8.47" % "test",
-      "org.scalatest" %% "scalatest" % "3.0.3" % "test"
-    ),
-    resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-    resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-    resolvers += "Artifactory" at "https://flow.artifactoryonline.com/flow/libs-release/",
-    credentials += Credentials(
-      "Artifactory Realm",
-      "flow.artifactoryonline.com",
-      System.getenv("ARTIFACTORY_USERNAME"),
-      System.getenv("ARTIFACTORY_PASSWORD")
-    )
+libraryDependencies ++= {
+
+  val redisDependency =
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, scalaMajor)) if scalaMajor >= 11 => "com.github.etaty" %% "rediscala" % "1.8.0"
+      case _ => "com.github.etaty" %% "rediscala" % "1.7.0"
+    }
+
+  Seq(
+    "com.gilt" %% "gfc-cache" % "0.0.3",
+    "com.typesafe.play" %% "play-json" % "2.6.2",
+    "io.flow" %% "lib-reference-scala" % "0.1.26",
+    "javax.inject" % "javax.inject" % "1",
+    redisDependency,
+    "org.mockito" % "mockito-core" % "2.8.47" % "test",
+    "org.scalatest" %% "scalatest" % "3.0.3" % "test"
+  )
+}
+
+resolvers ++= Seq(
+  "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
+  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+  "Artifactory" at "https://flow.artifactoryonline.com/flow/libs-release/"
+)
+
+credentials += Credentials(
+  "Artifactory Realm",
+  "flow.artifactoryonline.com",
+  System.getenv("ARTIFACTORY_USERNAME"),
+  System.getenv("ARTIFACTORY_PASSWORD")
 )
 
 publishTo := {
