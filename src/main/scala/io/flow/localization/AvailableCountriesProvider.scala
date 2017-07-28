@@ -20,7 +20,7 @@ private[localization] class AvailableCountriesProviderImpl(localizerClient: Loca
   import AvailableCountriesProviderImpl._
 
   override def retrieveData(): Future[Option[Seq[Country]]] = {
-    localizerClient.get(OrganizationCountriesRedisKey).map { optionalJson =>
+    localizerClient.get(OrganizationCountriesKey).map { optionalJson =>
       optionalJson.map { js =>
         Json.parse(js).as[CountriesData].available.flatMap(Countries.find)
       }
@@ -30,7 +30,7 @@ private[localization] class AvailableCountriesProviderImpl(localizerClient: Loca
   override def toKeyValues(optionalAvailableCountries: Option[Seq[Country]]): Iterable[(String, Object)] = {
     optionalAvailableCountries
       .map(_.flatMap(c => buildCountryKeys(c).map(_ -> Present)))
-      .getOrElse(sys.error(s"Available countries cannot be found - expected key named '$OrganizationCountriesRedisKey"))
+      .getOrElse(sys.error(s"Available countries cannot be found - expected key named '$OrganizationCountriesKey"))
   }
 
   private def buildCountryKeys(country: Country): Seq[String] = {
@@ -46,7 +46,7 @@ private[localization] class AvailableCountriesProviderImpl(localizerClient: Loca
 
 object AvailableCountriesProviderImpl {
 
-  private val OrganizationCountriesRedisKey = "organization_countries"
+  private val OrganizationCountriesKey = "organization_countries"
 
   private val Present = new Object()
 
