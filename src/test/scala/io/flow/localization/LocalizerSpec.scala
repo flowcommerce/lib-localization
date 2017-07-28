@@ -2,8 +2,8 @@ package io.flow.localization
 
 import io.flow.catalog.v0.models.LocalizedItemPrice
 import io.flow.common.v0.models.{Price, PriceWithBase}
-import io.flow.localized.item.cache.v0.models._
-import io.flow.localized.item.cache.v0.models.json._
+import io.flow.item.v0.models._
+import io.flow.item.v0.models.json._
 import io.flow.reference.data.{Countries, Currencies}
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._

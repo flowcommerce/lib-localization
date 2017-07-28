@@ -5,8 +5,8 @@ import javax.inject.Inject
 import com.redis.RedisClientPool
 import io.flow.catalog.v0.models.LocalizedItemPrice
 import io.flow.common.v0.models.PriceWithBase
-import io.flow.localized.item.cache.v0.models.LocalizedItemCachePricing
-import io.flow.localized.item.cache.v0.models.json._
+import io.flow.item.v0.models.LocalizedItemCachePricing
+import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
 import play.api.libs.json.Json
 

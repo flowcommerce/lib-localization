@@ -1,8 +1,8 @@
 package io.flow.localization
 
 import io.flow.localization.RatesCacheImpl.RateKey
-import io.flow.localized.item.cache.v0.models.LocalizedItemCacheRates
-import io.flow.localized.item.cache.v0.models.json._
+import io.flow.item.v0.models.LocalizedItemCacheRates
+import io.flow.item.v0.models.json._
 import io.flow.reference.Currencies
 import play.api.libs.json.Json
 

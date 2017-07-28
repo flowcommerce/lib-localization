@@ -1,8 +1,8 @@
 package io.flow.localization
 
 import io.flow.currency.v0.models.Rate
-import io.flow.localized.item.cache.v0.models.LocalizedItemCacheRates
-import io.flow.localized.item.cache.v0.models.json._
+import io.flow.item.v0.models.LocalizedItemCacheRates
+import io.flow.item.v0.models.json._
 import io.flow.reference.data.Currencies
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers

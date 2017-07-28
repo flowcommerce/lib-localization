@@ -1,6 +1,10 @@
 code:
   flow:
-    localized-item-cache:
+    item:
+      version: latest
+      generators:
+        play_2_x_standalone_json: src/main/scala/generated
+    bulk-event:
       version: latest
       generators:
         play_2_x_standalone_json: src/main/scala/generated
