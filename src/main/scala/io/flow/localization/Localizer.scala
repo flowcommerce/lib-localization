@@ -104,7 +104,7 @@ object Localizer {
     val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
     rateProvider.start()
 
-    val availableCountriesProvider = new AvailableCountriesProviderImpl(localizerClient, ratesRefreshPeriod.toMillis)
+    val availableCountriesProvider = new AvailableCountriesProviderCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
     availableCountriesProvider.start()
 
     new LocalizerImpl(

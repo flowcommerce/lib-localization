@@ -14,10 +14,10 @@ trait AvailableCountriesProvider {
 
 }
 
-private[localization] class AvailableCountriesProviderImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
+private[localization] class AvailableCountriesProviderCacheImpl(localizerClient: LocalizerClient, override val refreshPeriodMs: Long)
   extends LocalizerClientCache[Seq[Country], String, Object] with AvailableCountriesProvider {
 
-  import AvailableCountriesProviderImpl._
+  import AvailableCountriesProviderCacheImpl._
 
   override def retrieveData(): Future[Option[Seq[Country]]] = {
     localizerClient.get(OrganizationCountriesKey).map { optionalJson =>
@@ -44,7 +44,7 @@ private[localization] class AvailableCountriesProviderImpl(localizerClient: Loca
   override def isEnabled(country: String): Boolean = super.get(country.toLowerCase).isDefined
 }
 
-object AvailableCountriesProviderImpl {
+object AvailableCountriesProviderCacheImpl {
 
   private val OrganizationCountriesKey = "organization_countries"
 
