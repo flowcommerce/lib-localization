@@ -19,7 +19,7 @@ package io.flow.published.event.v0.models {
 
     case class UNDEFINED(override val toString: String) extends PublishedEventDiscriminator
 
-    val all: List[PublishedEventDiscriminator] = List(OrganizationRatesPublished, OrganizationCountriesPublished)
+    val all: scala.List[PublishedEventDiscriminator] = scala.List(OrganizationRatesPublished, OrganizationCountriesPublished)
 
     private[this] val byName: Map[String, PublishedEventDiscriminator] = all.map(x => x.toString.toLowerCase -> x).toMap
 

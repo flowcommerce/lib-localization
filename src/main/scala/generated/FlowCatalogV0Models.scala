@@ -22,7 +22,7 @@ package io.flow.catalog.v0.models {
 
     case class UNDEFINED(override val toString: String) extends ExpandableItemFunctionDiscriminator
 
-    val all: List[ExpandableItemFunctionDiscriminator] = List(ItemFunction, ItemFunctionReference)
+    val all: scala.List[ExpandableItemFunctionDiscriminator] = scala.List(ItemFunction, ItemFunctionReference)
 
     private[this] val byName: Map[String, ExpandableItemFunctionDiscriminator] = all.map(x => x.toString.toLowerCase -> x).toMap
 
@@ -49,7 +49,7 @@ package io.flow.catalog.v0.models {
 
     case class UNDEFINED(override val toString: String) extends ExpandableSubcatalogDiscriminator
 
-    val all: List[ExpandableSubcatalogDiscriminator] = List(Subcatalog, SubcatalogReference)
+    val all: scala.List[ExpandableSubcatalogDiscriminator] = scala.List(Subcatalog, SubcatalogReference)
 
     private[this] val byName: Map[String, ExpandableSubcatalogDiscriminator] = all.map(x => x.toString.toLowerCase -> x).toMap
 
@@ -79,7 +79,7 @@ package io.flow.catalog.v0.models {
 
     case class UNDEFINED(override val toString: String) extends LocalizedPriceKey
 
-    val all: List[LocalizedPriceKey] = List(LocalizedItemPrice, LocalizedItemVat, LocalizedItemDuty, LocalizedTotal)
+    val all: scala.List[LocalizedPriceKey] = scala.List(LocalizedItemPrice, LocalizedItemVat, LocalizedItemDuty, LocalizedTotal)
 
     private[this] val byName: Map[String, LocalizedPriceKey] = all.map(x => x.toString.toLowerCase -> x).toMap
 
@@ -748,7 +748,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[AdjustmentReasonKey] = List(DutyDeminimis, VatDeminimis)
+    val all: scala.List[AdjustmentReasonKey] = scala.List(DutyDeminimis, VatDeminimis)
 
     private[this]
     val byName: Map[String, AdjustmentReasonKey] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -792,7 +792,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[AttributeDataType] = List(Decimal, String)
+    val all: scala.List[AttributeDataType] = scala.List(Decimal, String)
 
     private[this]
     val byName: Map[String, AttributeDataType] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -846,7 +846,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[AttributeIntent] = List(Brand, FulfillmentMethod, Price, Taxability)
+    val all: scala.List[AttributeIntent] = scala.List(Brand, FulfillmentMethod, Price, Taxability)
 
     private[this]
     val byName: Map[String, AttributeIntent] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -886,7 +886,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[FulfillmentMethodType] = List(FulfillmentMethod)
+    val all: scala.List[FulfillmentMethodType] = scala.List(FulfillmentMethod)
 
     private[this]
     val byName: Map[String, FulfillmentMethodType] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -930,7 +930,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[FulfillmentMethodValue] = List(Digital, Physical)
+    val all: scala.List[FulfillmentMethodValue] = scala.List(Digital, Physical)
 
     private[this]
     val byName: Map[String, FulfillmentMethodValue] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -968,7 +968,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[IncludedLevyKey] = List(Duty, Vat, VatAndDuty)
+    val all: scala.List[IncludedLevyKey] = scala.List(Duty, Vat, VatAndDuty)
 
     private[this]
     val byName: Map[String, IncludedLevyKey] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -1011,7 +1011,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[QueryType] = List(Exclusion, Inclusion)
+    val all: scala.List[QueryType] = scala.List(Exclusion, Inclusion)
 
     private[this]
     val byName: Map[String, QueryType] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -1059,7 +1059,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[SubcatalogItemStatus] = List(Excluded, Included, Restricted)
+    val all: scala.List[SubcatalogItemStatus] = scala.List(Excluded, Included, Restricted)
 
     private[this]
     val byName: Map[String, SubcatalogItemStatus] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -1096,7 +1096,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[TaxabilityType] = List(TaxRule)
+    val all: scala.List[TaxabilityType] = scala.List(TaxRule)
 
     private[this]
     val byName: Map[String, TaxabilityType] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -1135,7 +1135,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[TaxabilityValue] = List(Exempt)
+    val all: scala.List[TaxabilityValue] = scala.List(Exempt)
 
     private[this]
     val byName: Map[String, TaxabilityValue] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -1173,7 +1173,7 @@ package io.flow.catalog.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[UpdatePolicy] = List(Auto, Queue, Discard)
+    val all: scala.List[UpdatePolicy] = scala.List(Auto, Queue, Discard)
 
     private[this]
     val byName: Map[String, UpdatePolicy] = all.map(x => x.toString.toLowerCase -> x).toMap

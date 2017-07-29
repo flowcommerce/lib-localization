@@ -24,7 +24,7 @@ package io.flow.price.v0.models {
 
     case class UNDEFINED(override val toString: String) extends DeminimisDiscriminator
 
-    val all: List[DeminimisDiscriminator] = List(DeminimisSimple, DeminimisPerItem)
+    val all: scala.List[DeminimisDiscriminator] = scala.List(DeminimisSimple, DeminimisPerItem)
 
     private[this] val byName: Map[String, DeminimisDiscriminator] = all.map(x => x.toString.toLowerCase -> x).toMap
 
@@ -288,7 +288,7 @@ package io.flow.price.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[LevyComponent] = List(Goods, Duty, Insurance, Freight, Vat)
+    val all: scala.List[LevyComponent] = scala.List(Goods, Duty, Insurance, Freight, Vat)
 
     private[this]
     val byName: Map[String, LevyComponent] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -323,7 +323,7 @@ package io.flow.price.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[LevyStrategy] = List(Minimum, Average, Maximum)
+    val all: scala.List[LevyStrategy] = scala.List(Minimum, Average, Maximum)
 
     private[this]
     val byName: Map[String, LevyStrategy] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -450,7 +450,7 @@ package io.flow.price.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[PriceDetailComponentKey] = List(BasePrice, Discount, CurrencyMargin, PercentItemMargin, FixedItemMargin, DutiesItemPrice, DutiesAddedMargin, DutiesRounding, DutiesDeminimis, VatItemPrice, VatAddedMargin, VatRounding, VatDutiesItemPrice, VatDutiesAddedMargin, VatDutiesRounding, VatDeminimis, ItemPricePercentSalesMargin, MarginsPercentSalesMargin, RoundingPercentSalesMargin, VatPercentSalesMargin, VatDutyPercentSalesMargin, DutyPercentSalesMargin)
+    val all: scala.List[PriceDetailComponentKey] = scala.List(BasePrice, Discount, CurrencyMargin, PercentItemMargin, FixedItemMargin, DutiesItemPrice, DutiesAddedMargin, DutiesRounding, DutiesDeminimis, VatItemPrice, VatAddedMargin, VatRounding, VatDutiesItemPrice, VatDutiesAddedMargin, VatDutiesRounding, VatDeminimis, ItemPricePercentSalesMargin, MarginsPercentSalesMargin, RoundingPercentSalesMargin, VatPercentSalesMargin, VatDutyPercentSalesMargin, DutyPercentSalesMargin)
 
     private[this]
     val byName: Map[String, PriceDetailComponentKey] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -507,7 +507,7 @@ package io.flow.price.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[PriceDetailKey] = List(ItemPrice, Margins, Vat, Duty, Rounding, Adjustment)
+    val all: scala.List[PriceDetailKey] = scala.List(ItemPrice, Margins, Vat, Duty, Rounding, Adjustment)
 
     private[this]
     val byName: Map[String, PriceDetailKey] = all.map(x => x.toString.toLowerCase -> x).toMap
@@ -542,7 +542,7 @@ package io.flow.price.v0.models {
      * lower case to avoid collisions with the camel cased values
      * above.
      */
-    val all: List[PricingLevySetting] = List(Included, Displayed, Ignored)
+    val all: scala.List[PricingLevySetting] = scala.List(Included, Displayed, Ignored)
 
     private[this]
     val byName: Map[String, PricingLevySetting] = all.map(x => x.toString.toLowerCase -> x).toMap
