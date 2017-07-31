@@ -16,17 +16,25 @@ import scala.concurrent.{ExecutionContext, Future}
 trait Localizer {
 
   /**
-    * Returns the localized pricing of the specified item for the specified country, using
+    * Returns the localized pricing of the specified items for the specified country, using
     * the default currency for that country.
     *
     * @param country country in the ISO 3166-3 format
     * @param itemNumbers the item numbers to localize
-    * @return the localized pricing of the specified item for the specified country
+    * @return the localized pricing of the specified items for the specified country
     */
   def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]]
 
+  /**
+    * Returns the localized pricing of the specified item for the specified country, using
+    * the default currency for that country.
+    *
+    * @param country country in the ISO 3166-3 format
+    * @param itemNumber the item number to localize
+    * @return the localized pricing of the specified item for the specified country
+    */
   def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]]
@@ -38,12 +46,27 @@ trait Localizer {
     * @param country country in the ISO 3166-3 format
     * @param itemNumber the id of the item
     * @param targetCurrency the ISO currency code
-    * @return the localized pricing of the specified item for the specified country
+    * @return the localized pricing of the specified item for the specified country in the specified target currency
     */
   def getSkuPriceByCountryWithCurrency(country: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     getSkuPriceByCountry(country, itemNumber).map(_.map(convert(_, targetCurrency)))
+  }
+
+  /**
+    * Returns the localized pricing of the specified items for the specified country,
+    * then converting as necessary to the specified target currency.
+    *
+    * @param country country in the ISO 3166-3 format
+    * @param itemNumbers the id of the items
+    * @param targetCurrency the ISO currency code
+    * @return the localized pricing of the specified items for the specified country in the specified target currency
+    */
+  def getSkuPricesByCountryWithCurrency(country: String, itemNumbers: Iterable[String], targetCurrency: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    getSkuPricesByCountry(country, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
   }
 
   /**
@@ -54,30 +77,55 @@ trait Localizer {
   def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice
 
   /**
-    * Returns localized pricing of the specified item for the specified experience
+    * Returns the localized pricing of the specified items for the specified experience
+    *
     * @param experienceKey the id of the experience
     * @param itemNumbers the item numbers to localize
-    * @return the localized pricing of the specified item for the specified experience
+    * @return the localized pricing of the specified items for the specified experience
     */
   def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]]
 
+  /**
+    * Returns the localized pricing of the specified item for the specified experience
+    *
+    * @param experienceKey the id of the experience
+    * @param itemNumber the item number to localize
+    * @return the localized pricing of the specified item for the specified experience
+    */
   def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]]
 
   /**
-    * Returns localized pricing of the specified item for the specified experience
+    * Returns the localized pricing of the specified item for the specified experience,
+    * then converting as necessary to the specified target currency.
+    *
     * @param experienceKey the id of the experience
     * @param itemNumber the id of the item
     * @param targetCurrency the ISO currency code
-    * @return the localized pricing of the specified item for the specified experience
+    * @return the localized pricing of the specified item for the specified experience in the specified currency
     */
   def getSkuPriceByExperienceWithCurrency(experienceKey: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     getSkuPriceByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)))
+  }
+
+  /**
+    * Returns the localized pricing of the specified items for the specified experience,
+    * then converting as necessary to the specified target currency.
+    *
+    * @param experienceKey the id of the experience
+    * @param itemNumbers the id of the items
+    * @param targetCurrency the ISO currency code
+    * @return the localized pricing of the specified items for the specified experience in the specified currency
+    */
+  def getSkuPricesByExperienceWithCurrency(experienceKey: String, itemNumbers: Iterable[String], targetCurrency: String)(
+    implicit executionContext: ExecutionContext
+  ): Future[List[Option[FlowSkuPrice]]] = {
+    getSkuPricesByExperience(experienceKey, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
   }
 
   /**
