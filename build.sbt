@@ -2,9 +2,9 @@ name := "lib-localization"
 
 organization := "io.flow"
 
-scalaVersion in ThisBuild := "2.12.2"
+scalaVersion in ThisBuild := "2.12.3"
 
-crossScalaVersions := Seq("2.12.2", "2.11.11", "2.10.6")
+crossScalaVersions := Seq("2.12.3", "2.11.11", "2.10.6")
 
 libraryDependencies ++= {
 
