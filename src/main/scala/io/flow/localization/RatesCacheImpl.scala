@@ -64,7 +64,7 @@ private[localization] object RatesCacheImpl {
       if usdToX.signum != 0
       usdToY <- originalRatesMap.get(UsdIso -> y)
     } yield {
-      (x -> y) -> usdToY / usdToX
+      buildKey(x, y) -> usdToY / usdToX
     }).toMap ++ originalRatesMap   // keep original rates
   }
 
