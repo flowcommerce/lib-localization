@@ -54,18 +54,25 @@ private[localization] object RatesCacheImpl {
         // append USD -> USD rate if missing
         (buildKey(UsdIso, UsdIso) -> One)).toMap
 
-    val allCurrencies: Set[String] = originalRatesMap.keySet.flatMap { case (base, target) => Set(base, target) }
+    val allFormattedCurrencies: Set[String] =
+      originalRatesMap
+        .keySet
+        .flatMap { case (base, target) => Set(base, target) }
+        .map(format)
 
-    (for {
-      x <- allCurrencies
-      y <- allCurrencies
+    val allRates: Set[(RateKey, BigDecimal)] = for {
+      x <- allFormattedCurrencies
+      y <- allFormattedCurrencies
       usdToX <- originalRatesMap.get(UsdIso -> x)
       // avoid division by 0
       if usdToX.signum != 0
       usdToY <- originalRatesMap.get(UsdIso -> y)
     } yield {
       buildKey(x, y) -> usdToY / usdToX
-    }).toMap ++ originalRatesMap   // keep original rates
+    }
+
+    // keep original rates
+    allRates.toMap ++ originalRatesMap
   }
 
   /**
