@@ -45,14 +45,16 @@ private[localization] object RatesCacheImpl {
   type RateKey = (String, String)
 
   val RatesKey: String = "rates"
-  val UsdIso: String = data.Currencies.Usd.iso42173.toLowerCase
+
+  val ReferenceCurrency = data.Currencies.Usd
+  val ReferenceCurrencyIso: String = format(ReferenceCurrency.iso42173)
   val One = BigDecimal(1)
 
   def computeAllRates(originalRates: Rates): Map[RateKey, BigDecimal] = {
     val originalRatesMap: Map[RateKey, BigDecimal] =
       (originalRates.rates.map(rate => buildKey(rate.base, rate.target) -> rate.value) :+
-        // append USD -> USD rate if missing
-        (buildKey(UsdIso, UsdIso) -> One)).toMap
+        // append Base -> Base rate if missing
+        (buildKey(ReferenceCurrencyIso, ReferenceCurrencyIso) -> One)).toMap
 
     val allFormattedCurrencies: Set[String] =
       originalRatesMap
@@ -63,12 +65,12 @@ private[localization] object RatesCacheImpl {
     val allRates: Set[(RateKey, BigDecimal)] = for {
       x <- allFormattedCurrencies
       y <- allFormattedCurrencies
-      usdToX <- originalRatesMap.get(UsdIso -> x)
+      refToX <- originalRatesMap.get(ReferenceCurrencyIso -> x)
       // avoid division by 0
-      if usdToX.signum != 0
-      usdToY <- originalRatesMap.get(UsdIso -> y)
+      if refToX.signum != 0
+      refToY <- originalRatesMap.get(ReferenceCurrencyIso -> y)
     } yield {
-      buildKey(x, y) -> usdToY / usdToX
+      buildKey(x, y) -> refToY / refToX
     }
 
     // keep original rates
