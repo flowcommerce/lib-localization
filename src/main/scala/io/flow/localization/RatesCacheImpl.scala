@@ -1,9 +1,9 @@
 package io.flow.localization
 
 import io.flow.localization.RatesCacheImpl.RateKey
-import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
 import io.flow.published.event.v0.models.json._
-import io.flow.reference.Currencies
+import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
+import io.flow.reference.{Currencies, data}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -33,10 +33,49 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
 
   override def toKeyValues(optionalRates: Option[Rates]): Iterable[((String, String), BigDecimal)] = {
     optionalRates
-      .map(_.rates.map(rate => buildKey(rate.base, rate.target) -> rate.value))
+      .map(computeAllRates)
       .getOrElse(sys.error(s"Rates cannot be found - expected key named '$RatesKey"))
   }
 
+}
+
+private[localization] object RatesCacheImpl {
+
+  // (Base, Target)
+  type RateKey = (String, String)
+
+  val RatesKey: String = "rates"
+
+  val ReferenceCurrency = data.Currencies.Usd
+  val ReferenceCurrencyIso: String = format(ReferenceCurrency.iso42173)
+  val One = BigDecimal(1)
+
+  def computeAllRates(originalRates: Rates): Map[RateKey, BigDecimal] = {
+    val originalRatesMap: Map[RateKey, BigDecimal] =
+      (originalRates.rates.map(rate => buildKey(rate.base, rate.target) -> rate.value) :+
+        // append Base -> Base rate if missing
+        (buildKey(ReferenceCurrencyIso, ReferenceCurrencyIso) -> One)).toMap
+
+    val allFormattedCurrencies: Set[String] =
+      originalRatesMap
+        .keySet
+        .flatMap { case (base, target) => Set(base, target) }
+        .map(format)
+
+    val allRates: Set[(RateKey, BigDecimal)] = for {
+      x <- allFormattedCurrencies
+      y <- allFormattedCurrencies
+      refToX <- originalRatesMap.get(ReferenceCurrencyIso -> x)
+      // avoid division by 0
+      if refToX.signum != 0
+      refToY <- originalRatesMap.get(ReferenceCurrencyIso -> y)
+    } yield {
+      buildKey(x, y) -> refToY / refToX
+    }
+
+    // keep original rates
+    allRates.toMap ++ originalRatesMap
+  }
 
   /**
     * Formats the currency code in a deterministic way, preferring the lowercase
@@ -48,11 +87,4 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
 
   private def buildKey(base: String, target: String): RateKey = (format(base), format(target))
 
-}
-
-object RatesCacheImpl {
-
-  type RateKey = (String, String)
-
-  private val RatesKey = "rates"
 }

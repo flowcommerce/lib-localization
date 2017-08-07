@@ -14,16 +14,22 @@ import play.api.libs.json.Json
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import RatesCacheImpl._
+import io.flow.reference.v0.models.Currency
 
 class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
 
-  val firstRate = Rate(
-    id = "",
-    base = Currencies.Cad.iso42173,
-    target = Currencies.Eur.iso42173,
-    value = 0.5,
-    effectiveAt = DateTime.now
-  )
+  def createRate(base: Currency, target: Currency, value: Double) = {
+    Rate(
+      id = "",
+      base = base.iso42173,
+      target = target.iso42173,
+      value = value,
+      effectiveAt = DateTime.now
+    )
+  }
+
+  val firstRate = createRate(Currencies.Cad, Currencies.Eur, 0.5)
 
   val firstRates = OrganizationRatesData(rates = Seq(firstRate))
   val secondRates = OrganizationRatesData(rates = Seq(firstRate.copy(value = 0.1)))
@@ -32,7 +38,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "retrieve the rates" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get("rates"))
+      when(localizerClient.get(RatesKey))
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
 
       val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
@@ -43,7 +49,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "refresh the rates" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get("rates"))
+      when(localizerClient.get(RatesKey))
         // first call with a rate of 0.5
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
         // second call with a rate of 0.1
@@ -56,6 +62,42 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       eventually(Timeout(200.millis)) {
         ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(0.1))
       }
+    }
+
+    "compute all rates" in {
+      val rates = Seq(
+        createRate(Currencies.Usd, Currencies.Cad, 0.5),
+        createRate(Currencies.Usd, Currencies.Eur, 4),
+        createRate(Currencies.Usd, Currencies.Jpy, 10)
+      )
+      val originalRates = OrganizationRatesData(rates = rates)
+
+      val localizerClient = mock[LocalizerClient]
+      when(localizerClient.get(RatesKey))
+        .thenReturn(Future.successful(Some(Json.toJson(originalRates).toString)))
+
+      val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
+      ratesCache.start()
+
+      ratesCache.get(Currencies.Usd.iso42173, Currencies.Usd.iso42173) shouldBe Some(BigDecimal(1))
+      ratesCache.get(Currencies.Usd.iso42173, Currencies.Cad.iso42173) shouldBe Some(BigDecimal(0.5))
+      ratesCache.get(Currencies.Usd.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(4))
+      ratesCache.get(Currencies.Usd.iso42173, Currencies.Jpy.iso42173) shouldBe Some(BigDecimal(10))
+
+      ratesCache.get(Currencies.Cad.iso42173, Currencies.Usd.iso42173) shouldBe Some(BigDecimal(2))
+      ratesCache.get(Currencies.Cad.iso42173, Currencies.Cad.iso42173) shouldBe Some(BigDecimal(1))
+      ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(8))
+      ratesCache.get(Currencies.Cad.iso42173, Currencies.Jpy.iso42173) shouldBe Some(BigDecimal(20))
+
+      ratesCache.get(Currencies.Eur.iso42173, Currencies.Usd.iso42173) shouldBe Some(BigDecimal(0.25))
+      ratesCache.get(Currencies.Eur.iso42173, Currencies.Cad.iso42173) shouldBe Some(BigDecimal(0.125))
+      ratesCache.get(Currencies.Eur.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(1))
+      ratesCache.get(Currencies.Eur.iso42173, Currencies.Jpy.iso42173) shouldBe Some(BigDecimal(2.5))
+
+      ratesCache.get(Currencies.Jpy.iso42173, Currencies.Usd.iso42173) shouldBe Some(BigDecimal(0.1))
+      ratesCache.get(Currencies.Jpy.iso42173, Currencies.Cad.iso42173) shouldBe Some(BigDecimal(0.05))
+      ratesCache.get(Currencies.Jpy.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(0.4))
+      ratesCache.get(Currencies.Jpy.iso42173, Currencies.Jpy.iso42173) shouldBe Some(BigDecimal(1))
     }
 
   }
