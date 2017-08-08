@@ -42,7 +42,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       includes = None
     ),
     attributes = Map(
-      "msrp" -> PriceWithBase(
+      "msrp_price" -> PriceWithBase(
         amount = 100,
         currency = "CAD",
         label = "CA$100.00",
@@ -67,7 +67,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       )
     ),
     attributes = Map(
-      "msrp" -> PriceWithBase(
+      "msrp_price" -> PriceWithBase(
         amount = 50,
         currency = "EUR",
         label = "EUR50.00",
@@ -92,7 +92,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       )
     ),
     attributes = Map(
-      "msrp" -> PriceWithBase(
+      "msrp_price" -> PriceWithBase(
         amount = 10,
         currency = "EUR",
         label = "EUR10.00",
@@ -120,14 +120,18 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
+      val expected = FlowSkuPrice(pricing50Cad)
+
       eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getSkuPriceByCountry(country, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
+        whenReady(localizer.getSkuPriceByCountry(country, itemNumber = itemNumber)) { res =>
+          res shouldBe Some(expected)
+          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
         }
 
         // Verify can retrieve by three characters country code
-        whenReady(localizer.getSkuPriceByCountry("CAN", itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
+        whenReady(localizer.getSkuPriceByCountry("CAN", itemNumber = itemNumber)) { res =>
+          res shouldBe Some(expected)
+          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
         }
       }
     }
@@ -145,14 +149,18 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
+      val expected = FlowSkuPrice(pricing50Cad)
+
       eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
+        whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) { res =>
+          res shouldBe Some(expected)
+          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
         }
 
         // Verify case insensitive
-        whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {
-          _ shouldBe Some(FlowSkuPrice(pricing50Cad))
+        whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {res =>
+          res shouldBe Some(expected)
+          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
         }
       }
     }
