@@ -19,8 +19,8 @@ object FlowSkuPrice {
   def apply(pricing: LocalItemPricing): FlowSkuPrice = {
     FlowSkuPrice(
       salePrice = pricing.price,
-      msrpPrice = pricing.attributes.get("msrp"),
-      basePrice = pricing.attributes.get("base"),
+      msrpPrice = pricing.attributes.get("msrp_price"),
+      basePrice = pricing.attributes.get("base_price"),
       shippingSurcharge = pricing.attributes.get("shipping_surcharge")
     )
   }
