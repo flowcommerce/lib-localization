@@ -2,6 +2,8 @@ package io.flow.localization
 
 import io.flow.published.event.v0.models.OrganizationCountriesData
 import io.flow.published.event.v0.models.json._
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -21,7 +23,7 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
 
     "retrieve the enabled countries case insensitively" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get("organization_countries"))
+      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"))(any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstCountries).toString)))
 
       val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 1.minute.toMillis)
@@ -33,9 +35,9 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
       countriesCache.isEnabled("usa") shouldBe false
     }
 
-    "refresh the enabled countries and retrieve insensitively" in {
+    "refresh the enabled countries and retrieve case insensitively" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get("organization_countries"))
+      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"))(any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstCountries).toString)))
         .thenReturn(Future.successful(Some(Json.toJson(secondCountries).toString)))
 

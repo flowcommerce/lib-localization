@@ -187,6 +187,33 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       }
     }
 
+    "retrieve and convert localized pricings by country" in {
+      val localizerClient = mock[LocalizerClient]
+      val rateProvider = mock[RateProvider]
+
+      val country = Countries.Can.iso31662.toLowerCase
+      val itemNumber1 = "item1"
+      val itemNumber2 = "item2"
+
+      val key1 = s"country-$country:$itemNumber1"
+      val key2 = s"country-$country:$itemNumber2"
+      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+
+      when(localizerClient.mGet(Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
+      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
+
+      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
+
+      eventually(Timeout(3.seconds)) {
+        whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
+          targetCurrency = Currencies.Eur.iso42173)) { res =>
+          res should have size 2
+          res(0) shouldBe Some(FlowSkuPrice(pricing25Eur))
+          res(1) shouldBe Some(FlowSkuPrice(pricing25Eur))
+        }
+      }
+    }
+
     "retrieve and convert a localized pricing by experience" in {
       val localizerClient = mock[LocalizerClient]
       val rateProvider = mock[RateProvider]

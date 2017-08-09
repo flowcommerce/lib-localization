@@ -10,8 +10,8 @@ libraryDependencies ++= {
 
   val redisDependency =
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) if scalaMajor >= 11 => "com.github.etaty" %% "rediscala" % "1.8.0"
-      case _ => "com.github.etaty" %% "rediscala" % "1.7.0"
+      case Some((2, scalaMajor)) if scalaMajor >= 11 => "com.twitter" %% "finagle-redis" % "6.45.0"
+      case _ => "com.twitter" %% "finagle-redis" % "6.35.0"
     }
 
   Seq(
