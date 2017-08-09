@@ -104,4 +104,15 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
   }
 
+  "return empty rates if key is missing" in {
+    val localizerClient = mock[LocalizerClient]
+    when(localizerClient.get(ArgumentMatchers.eq(RatesKey))(any()))
+      .thenReturn(Future.successful(None))
+
+    val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
+    ratesCache.start()
+
+    ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe None
+  }
+
 }

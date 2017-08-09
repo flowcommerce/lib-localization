@@ -58,6 +58,20 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
       }
     }
 
+    "return no enabled countries if key is missing" in {
+      val localizerClient = mock[LocalizerClient]
+      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"))(any()))
+        .thenReturn(Future.successful(None))
+
+      val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 1.minute.toMillis)
+      countriesCache.start()
+
+      countriesCache.isEnabled("FRA") shouldBe false
+      countriesCache.isEnabled("fr") shouldBe false
+      countriesCache.isEnabled("USA") shouldBe false
+      countriesCache.isEnabled("usa") shouldBe false
+    }
+
   }
 
 }
