@@ -30,7 +30,11 @@ private[localization] class AvailableCountriesProviderCacheImpl(localizerClient:
   override def toKeyValues(optionalAvailableCountries: Option[Seq[Country]]): Iterable[(String, Object)] = {
     optionalAvailableCountries
       .map(_.flatMap(c => buildCountryKeys(c).map(_ -> Present)))
-      .getOrElse(sys.error(s"Available countries cannot be found - expected key named '$OrganizationCountriesKey"))
+      .getOrElse {
+        warn(s"Available countries cannot be found - expected key named '$OrganizationCountriesKey'. " +
+          s"Returning no enabled countries.")
+        Iterable.empty
+      }
   }
 
   private def buildCountryKeys(country: Country): Seq[String] = {

@@ -1,5 +1,6 @@
 package io.flow.localization
 
+import io.flow.localization.AvailableCountriesProviderCacheImpl.OrganizationCountriesKey
 import io.flow.localization.RatesCacheImpl.RateKey
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
@@ -34,7 +35,10 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
   override def toKeyValues(optionalRates: Option[Rates]): Iterable[((String, String), BigDecimal)] = {
     optionalRates
       .map(computeAllRates)
-      .getOrElse(sys.error(s"Rates cannot be found - expected key named '$RatesKey"))
+      .getOrElse{
+        warn(s"Rates cannot be found - expected key named '$RatesKey'. Returning no rates.")
+        Iterable.empty
+      }
   }
 
 }
