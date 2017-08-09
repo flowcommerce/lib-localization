@@ -1,9 +1,11 @@
 package io.flow.localization
 
 import io.flow.currency.v0.models.Rate
+import io.flow.localization.RatesCacheImpl._
 import io.flow.published.event.v0.models.OrganizationRatesData
 import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
+import io.flow.reference.v0.models.Currency
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
@@ -11,11 +13,11 @@ import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import RatesCacheImpl._
-import io.flow.reference.v0.models.Currency
 
 class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
 
@@ -38,7 +40,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "retrieve the rates" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(RatesKey))
+      when(localizerClient.get(ArgumentMatchers.eq(RatesKey))(any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
 
       val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
@@ -49,7 +51,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
     "refresh the rates" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(RatesKey))
+      when(localizerClient.get(ArgumentMatchers.eq(RatesKey))(any()))
         // first call with a rate of 0.5
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
         // second call with a rate of 0.1
@@ -73,7 +75,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val originalRates = OrganizationRatesData(rates = rates)
 
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(RatesKey))
+      when(localizerClient.get(ArgumentMatchers.eq(RatesKey))(any()))
         .thenReturn(Future.successful(Some(Json.toJson(originalRates).toString)))
 
       val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)

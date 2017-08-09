@@ -2,13 +2,13 @@ package io.flow.localization
 
 import javax.inject.Inject
 
+import com.twitter.finagle.redis
 import io.flow.catalog.v0.models.LocalizedItemPrice
 import io.flow.common.v0.models.PriceWithBase
 import io.flow.item.v0.models.LocalItem
 import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
 import play.api.libs.json.Json
-import redis.RedisClientPool
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -143,11 +143,11 @@ object Localizer {
 
   /**
     * Creates a new [[Localizer]] backed by [[RedisLocalizerClient]]
-    * @param redisClientPool the client pool to use to connect to redis
+    * @param redisClient the redis client to use to connect to redis
     * @return a new [[Localizer]] backed by [[RedisLocalizerClient]]
     */
-  def apply(redisClientPool: RedisClientPool, ratesRefreshPeriod: FiniteDuration = DefaultRatesRefreshPeriod): Localizer = {
-    val localizerClient = new RedisLocalizerClient(redisClientPool)
+  def apply(redisClient: redis.Client, ratesRefreshPeriod: FiniteDuration = DefaultRatesRefreshPeriod): Localizer = {
+    val localizerClient = new RedisLocalizerClient(redisClient)
 
     val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
     rateProvider.start()
@@ -201,7 +201,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricings(keyProviders: Iterable[KeyProvider])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    localizerClient.mget(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
+    localizerClient.mGet(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
       optionalPrices.map(toFlowSkuPrice).toList
     }
   }
