@@ -13,7 +13,7 @@ libraryDependencies ++= {
     "com.typesafe.play" %% "play-json" % "2.6.2",
     "io.flow" %% "lib-reference-scala" % "0.1.30",
     "javax.inject" % "javax.inject" % "1",
-    "com.twitter" %% "finagle-redis" % "6.30.0",
+    "com.twitter" %% "finagle-redis" % "6.45.0",
     "org.mockito" % "mockito-core" % "2.8.47" % "test",
     "org.scalatest" %% "scalatest" % "3.0.3" % "test"
   )
