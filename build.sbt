@@ -17,7 +17,7 @@ libraryDependencies ++= {
   Seq(
     "com.gilt" %% "gfc-cache" % "0.0.3",
     "com.typesafe.play" %% "play-json" % "2.6.2",
-    "io.flow" %% "lib-reference-scala" % "0.1.29",
+    "io.flow" %% "lib-reference-scala" % "0.1.30",
     "javax.inject" % "javax.inject" % "1",
     redisDependency,
     "org.mockito" % "mockito-core" % "2.8.47" % "test",
