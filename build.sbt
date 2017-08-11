@@ -2,24 +2,18 @@ name := "lib-localization"
 
 organization := "io.flow"
 
-scalaVersion in ThisBuild := "2.12.3"
+scalaVersion in ThisBuild := "2.11.11"
 
-crossScalaVersions := Seq("2.12.3", "2.11.11", "2.10.6")
+crossScalaVersions := Seq("2.11.11", "2.10.6")
 
 libraryDependencies ++= {
-
-  val redisDependency =
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) if scalaMajor >= 11 => "com.twitter" %% "finagle-redis" % "6.45.0"
-      case _ => "com.twitter" %% "finagle-redis" % "6.35.0"
-    }
 
   Seq(
     "com.gilt" %% "gfc-cache" % "0.0.3",
     "com.typesafe.play" %% "play-json" % "2.6.2",
     "io.flow" %% "lib-reference-scala" % "0.1.30",
     "javax.inject" % "javax.inject" % "1",
-    redisDependency,
+    "com.twitter" %% "finagle-redis" % "6.30.0",
     "org.mockito" % "mockito-core" % "2.8.47" % "test",
     "org.scalatest" %% "scalatest" % "3.0.3" % "test"
   )

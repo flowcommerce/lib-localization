@@ -1,10 +1,11 @@
 package io.flow.localization
 
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 import com.twitter.finagle.redis
-import com.twitter.finagle.redis.util._
 import com.twitter.util.{Return, Throw, Future => TwitterFuture}
+import org.jboss.netty.buffer.ChannelBuffers
 
 import scala.concurrent.{ExecutionContext, Future, Promise => ScalaPromise}
 
@@ -24,14 +25,16 @@ trait LocalizerClient {
 
 class RedisLocalizerClient @Inject() (redisClient: redis.Client) extends LocalizerClient {
 
+  import StandardCharsets._
+
   import RedisLocalizerClient._
 
   override def get(key: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
-    redisClient.get(StringToBuf(key)).asScala.map(_.map(BufToString.apply))
+    redisClient.get(ChannelBuffers.copiedBuffer(key, UTF_8)).asScala.map(_.map(_.toString(UTF_8)))
   }
 
   override def mGet(keys: Seq[String])(implicit ec: ExecutionContext): Future[Seq[Option[String]]] = {
-    redisClient.mGet(keys.map(StringToBuf.apply)).asScala.map(_.map(_.map(BufToString.apply)))
+    redisClient.mGet(keys.map(ChannelBuffers.copiedBuffer(_, UTF_8))).asScala.map(_.map(_.map(_.toString(UTF_8))))
   }
 
 }
