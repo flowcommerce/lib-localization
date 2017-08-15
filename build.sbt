@@ -10,7 +10,7 @@ libraryDependencies ++= {
 
   Seq(
     "com.gilt" %% "gfc-cache" % "0.0.3",
-    "com.typesafe.play" %% "play-json" % "2.6.2",
+    "com.typesafe.play" %% "play-json" % "2.3.10",
     "io.flow" %% "lib-reference-scala" % "0.1.30",
     "javax.inject" % "javax.inject" % "1",
     "com.twitter" %% "finagle-redis" % "6.30.0",
@@ -40,4 +40,4 @@ publishTo := {
     Some("Artifactory Realm" at s"$host/libs-release-local")
   }
 }
-version := "0.0.19"
+version := "0.0.20"
