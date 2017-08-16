@@ -2,15 +2,16 @@
 
 # lib-localization
 
-Library to retrieve localized data from a redis store
+Library to retrieve localized data from a redis store.
 
 ## Instantiating a Localizer
 
 ```
+import com.twitter.finagle.redis
 import io.flow.localization.Localizer
-import import com.twitter.finagle.Redis
 
-val localizer = Localizer(Redis.newRichClient("localhost:6379"))
+val redisClient = redis.Client("localhost:6379")
+val localizer = Localizer(redisClient)
 ```
 
 
