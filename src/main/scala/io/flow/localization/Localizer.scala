@@ -287,7 +287,7 @@ private[this] sealed trait KeyProvider {
 
 private[this] case class CountryKey(country: String, itemNumber: String) extends KeyProvider {
   def getKey: String = {
-    val code = Countries.find(country).map(_.iso31662).getOrElse(country).toLowerCase
+    val code = Countries.find(country).map(_.iso31663).getOrElse(country)
     s"country-$code:$itemNumber"
   }
 }

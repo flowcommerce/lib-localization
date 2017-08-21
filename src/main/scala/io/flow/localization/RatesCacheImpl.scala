@@ -1,6 +1,5 @@
 package io.flow.localization
 
-import io.flow.localization.AvailableCountriesProviderCacheImpl.OrganizationCountriesKey
 import io.flow.localization.RatesCacheImpl.RateKey
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
