@@ -4,6 +4,7 @@ import io.flow.localization.RatesCacheImpl.RateKey
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
 import io.flow.reference.{Currencies, data}
+import org.slf4j.LoggerFactory
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -19,6 +20,8 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
 
   import RatesCacheImpl._
 
+  private val log = LoggerFactory.getLogger(getClass)
+
   override def get(base: String, target: String): Option[BigDecimal] = {
     super.get(buildKey(base, target))
   }
@@ -27,6 +30,11 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
     localizerClient.get(RatesKey).map { optionalJson =>
       optionalJson.map { js =>
         Json.parse(js).as[Rates]
+      }
+    }.recover {
+      case ex: Throwable => {
+        log.warn("FlowError - failed to retrieve data for FX rates: ${ex.getMessage}", ex)
+        None
       }
     }
   }
