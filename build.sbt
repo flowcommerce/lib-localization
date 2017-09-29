@@ -10,7 +10,7 @@ libraryDependencies ++= {
 
   Seq(
     "com.gilt" %% "gfc-cache" % "0.0.3",
-    "com.typesafe.play" %% "play-json" % "2.3.10",
+    "com.typesafe.play" %% "play-json" % "2.4.11",
     "io.flow" %% "lib-reference-scala" % "0.1.30",
     "javax.inject" % "javax.inject" % "1",
     "com.twitter" %% "finagle-redis" % "6.30.0",
