@@ -201,7 +201,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricings(keyProviders: Iterable[KeyProvider], useGzip: Boolean = false)(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    localizerClient.mGet(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
+    localizerClient.mGet(keyProviders.map(_.getKey).toSeq, gzipped = true).map { optionalPrices =>
       optionalPrices.map(toFlowSkuPrice).toList
     }
   }
@@ -209,7 +209,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricing(keyProvider: KeyProvider, useGzip: Boolean = false)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    localizerClient.get(keyProvider.getKey).map(toFlowSkuPrice)
+    localizerClient.get(keyProvider.getKey, gzipped = true).map(toFlowSkuPrice)
   }
 
   private def toFlowSkuPrice(optionalPrice: Option[String]) = {

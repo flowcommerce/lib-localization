@@ -18,12 +18,12 @@ trait LocalizerClient {
   /**
     * Returns the value associated with the specified key, if any
     */
-  def get(key: String)(implicit ec: ExecutionContext): Future[Option[String]]
+  def get(key: String, gzipped: Boolean)(implicit ec: ExecutionContext): Future[Option[String]]
 
   /**
     * Returns the values associated with the specified keys, if any
     */
-  def mGet(keys: Seq[String])(implicit ec: ExecutionContext): Future[Seq[Option[String]]]
+  def mGet(keys: Seq[String], gzipped: Boolean)(implicit ec: ExecutionContext): Future[Seq[Option[String]]]
 
 }
 
@@ -35,11 +35,14 @@ class RedisLocalizerClient @Inject() (redisClient: redis.Client) extends Localiz
 
   import RedisLocalizerClient._
 
-  override def get(key: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
+  override def get(key: String, gzipped: Boolean)(implicit ec: ExecutionContext): Future[Option[String]] = {
     redisClient
       .get(ChannelBuffers.copiedBuffer(key, UTF_8))
       .asScala
-      .map(_.map(buf => decompress(toArray(buf))))
+      .map(_.map { buf =>
+        if (gzipped) decompress(toArray(buf))
+        else buf.toString(UTF_8)
+      })
       .recover {
         case ex: Throwable => {
           log.warn(s"FlowError - failed to get key $key from redis cache. ${ex.getMessage}", ex)
@@ -48,11 +51,14 @@ class RedisLocalizerClient @Inject() (redisClient: redis.Client) extends Localiz
       }
   }
 
-  override def mGet(keys: Seq[String])(implicit ec: ExecutionContext): Future[Seq[Option[String]]] = {
+  override def mGet(keys: Seq[String], gzipped: Boolean)(implicit ec: ExecutionContext): Future[Seq[Option[String]]] = {
     redisClient
       .mGet(keys.map(ChannelBuffers.copiedBuffer(_, UTF_8)))
       .asScala
-      .map(_.map(_.map(buf => decompress(toArray(buf)))))
+      .map(_.map(_.map { buf =>
+        if (gzipped) decompress(toArray(buf))
+        else buf.toString(UTF_8)
+      }))
       .recover {
         case ex: Throwable => {
           log.warn(s"FlowError - failed to mget keys ${keys.mkString(",")} from redis cache. ${ex.getMessage}", ex)

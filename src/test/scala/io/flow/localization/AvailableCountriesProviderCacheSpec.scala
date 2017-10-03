@@ -23,7 +23,7 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
 
     "retrieve the enabled countries case insensitively" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"))(any()))
+      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"), any())(any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstCountries).toString)))
 
       val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 1.minute.toMillis)
@@ -37,7 +37,7 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
 
     "refresh the enabled countries and retrieve case insensitively" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"))(any()))
+      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"), any())(any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstCountries).toString)))
         .thenReturn(Future.successful(Some(Json.toJson(secondCountries).toString)))
 
@@ -60,7 +60,7 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
 
     "return no enabled countries if key is missing" in {
       val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"))(any()))
+      when(localizerClient.get(ArgumentMatchers.eq("organization_countries"), any())(any()))
         .thenReturn(Future.successful(None))
 
       val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 1.minute.toMillis)
