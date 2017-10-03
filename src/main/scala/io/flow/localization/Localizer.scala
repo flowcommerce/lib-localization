@@ -198,7 +198,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
     getPricings(keys)
   }
 
-  private def getPricings(keyProviders: Iterable[KeyProvider])(
+  private def getPricings(keyProviders: Iterable[KeyProvider], useGzip: Boolean = false)(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
     localizerClient.mGet(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
@@ -206,7 +206,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
     }
   }
 
-  private def getPricing(keyProvider: KeyProvider)(
+  private def getPricing(keyProvider: KeyProvider, useGzip: Boolean = false)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     localizerClient.get(keyProvider.getKey).map(toFlowSkuPrice)
@@ -288,10 +288,10 @@ private[this] sealed trait KeyProvider {
 private[this] case class CountryKey(country: String, itemNumber: String) extends KeyProvider {
   def getKey: String = {
     val code = Countries.find(country).map(_.iso31663).getOrElse(country)
-    s"country-$code:$itemNumber"
+    s"c-$code:$itemNumber"
   }
 }
 
 private[this] case class ExperienceKey(experience: String, itemNumber: String) extends KeyProvider {
-  def getKey: String = s"experience-${experience.toLowerCase}:$itemNumber"
+  def getKey: String = s"e-${experience.toLowerCase}:$itemNumber"
 }

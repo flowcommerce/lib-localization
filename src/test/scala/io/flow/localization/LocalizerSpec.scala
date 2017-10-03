@@ -113,7 +113,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
-      val key = s"country-$country:$itemNumber"
+      val key = s"c-$country:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
@@ -143,7 +143,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val experienceKey = "canada-2"
       val itemNumber = "item123"
 
-      val key = s"experience-$experienceKey:$itemNumber"
+      val key = s"e-$experienceKey:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
@@ -173,7 +173,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
-      val key = s"country-$country:$itemNumber"
+      val key = s"c-$country:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
@@ -206,8 +206,8 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber1 = "item1"
       val itemNumber2 = "item2"
 
-      val key1 = s"country-$country:$itemNumber1"
-      val key2 = s"country-$country:$itemNumber2"
+      val key1 = s"c-$country:$itemNumber1"
+      val key2 = s"c-$country:$itemNumber2"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.mGet(Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
@@ -232,7 +232,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val experienceKey = "canada-2"
       val itemNumber = "item123"
 
-      val key = s"experience-$experienceKey:$itemNumber"
+      val key = s"e-$experienceKey:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
@@ -254,7 +254,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
-      val key = s"country-$country:$itemNumber"
+      val key = s"c-$country:$itemNumber"
       val value: String = Json.toJson(createItem(pricing50Cad)).toString
 
       when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))

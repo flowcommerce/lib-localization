@@ -1,14 +1,17 @@
 package io.flow.localization
 
+import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
+import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 
 import com.twitter.finagle.redis
 import com.twitter.util.{Return, Throw, Future => TwitterFuture}
-import org.jboss.netty.buffer.ChannelBuffers
+import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise => ScalaPromise}
+import scala.io.Codec
 
 trait LocalizerClient {
 
@@ -33,20 +36,26 @@ class RedisLocalizerClient @Inject() (redisClient: redis.Client) extends Localiz
   import RedisLocalizerClient._
 
   override def get(key: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
-    redisClient.get(ChannelBuffers.copiedBuffer(key, UTF_8)).asScala.map(_.map(_.toString(UTF_8)))
+    redisClient
+      .get(ChannelBuffers.copiedBuffer(key, UTF_8))
+      .asScala
+      .map(_.map(buf => decompress(toArray(buf))))
       .recover {
         case ex: Throwable => {
-          log.warn("FlowError - failed to get key ${key} from redis cache. ${ex.getMessage}", ex)
+          log.warn(s"FlowError - failed to get key $key from redis cache. ${ex.getMessage}", ex)
           None
         }
       }
   }
 
   override def mGet(keys: Seq[String])(implicit ec: ExecutionContext): Future[Seq[Option[String]]] = {
-    redisClient.mGet(keys.map(ChannelBuffers.copiedBuffer(_, UTF_8))).asScala.map(_.map(_.map(_.toString(UTF_8))))
+    redisClient
+      .mGet(keys.map(ChannelBuffers.copiedBuffer(_, UTF_8)))
+      .asScala
+      .map(_.map(_.map(buf => decompress(toArray(buf)))))
       .recover {
         case ex: Throwable => {
-          log.warn("FlowError - failed to mget keys ${keys} from redis cache. ${ex.getMessage}", ex)
+          log.warn(s"FlowError - failed to mget keys ${keys.mkString(",")} from redis cache. ${ex.getMessage}", ex)
           Nil
         }
       }
@@ -66,6 +75,25 @@ object RedisLocalizerClient {
       }
       promise.future
     }
+  }
+
+  private def toArray(buf: ChannelBuffer): Array[Byte] = {
+    if (buf.hasArray && buf.arrayOffset() == 0 && buf.readableBytes() == buf.capacity()) {
+      // we have no offset and the length is the same as the capacity. Its safe to reuse the array without copy it first
+      buf.array()
+    } else {
+      // copy the ChannelBuffer to a byte array
+      val res = new Array[Byte](buf.readableBytes())
+      buf.getBytes(0, res)
+      res
+    }
+  }
+
+  private def decompress(compressed: Array[Byte]): String = {
+    val inputStream = new GZIPInputStream(new ByteArrayInputStream(compressed))
+    val res = scala.io.Source.fromInputStream(inputStream)(Codec.UTF8).mkString
+    inputStream.close()
+    res
   }
 
 }
