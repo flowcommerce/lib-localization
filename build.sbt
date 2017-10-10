@@ -9,7 +9,6 @@ lazy val commonSettings = Seq(
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
     "Artifactory" at "https://flow.artifactoryonline.com/flow/libs-release/"
   ),
-
   credentials += Credentials(
     "Artifactory Realm",
     "flow.artifactoryonline.com",
