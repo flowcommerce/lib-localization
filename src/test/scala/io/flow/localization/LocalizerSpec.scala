@@ -16,93 +16,27 @@ import play.api.libs.json.Json
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import FlowSkuPrice._
+import org.velvia.MsgPack
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
 
-  private def createItem(pricing: LocalItemPricing) = {
-    LocalItem(
-      id = "",
-      experience = ExperienceSummary("", "", ""),
-      item = CatalogItemReference("", ""),
-      pricing = pricing,
-      status = SubcatalogItemStatus.Included
-    )
-  }
-
-  private val pricing50Cad = LocalItemPricing (
-    price = LocalizedItemPrice(
-      currency = "CAD",
-      amount = 50,
-      label = "CA$50.00",
-      base = Price(
-        currency = "USD",
-        amount = 40,
-        label = "$40.00"
-      ),
-      includes = None
-    ),
-    attributes = Map(
-      "msrp_price" -> PriceWithBase(
-        amount = 100,
-        currency = "CAD",
-        label = "CA$100.00",
-        base = Some(Price(
-          amount = 100,
-          currency = "USD",
-          label = "$75.00"
-        ))
-      )
-    )
+  private val pricing50Cad = Map(
+    CurrencyKey -> "CAD",
+    SalePriceKey -> 50.0,
+    MsrpPriceKey -> 100.0
   )
 
-  private val pricing25Eur = LocalItemPricing (
-    price = LocalizedItemPrice(
-      currency = "EUR",
-      amount = 25,
-      label = "EUR25.00",
-      base = Price(
-        currency = "USD",
-        amount = 40,
-        label = "$40.00"
-      )
-    ),
-    attributes = Map(
-      "msrp_price" -> PriceWithBase(
-        amount = 50,
-        currency = "EUR",
-        label = "EUR50.00",
-        base = Some(Price(
-          amount = 100,
-          currency = "USD",
-          label = "$75.00"
-        ))
-      )
-    )
+  private val pricing25Eur = Map(
+    CurrencyKey -> "EUR",
+    SalePriceKey -> 25.0,
+    MsrpPriceKey -> 50.0
   )
 
-  private val pricing5Eur = LocalItemPricing (
-    price = LocalizedItemPrice(
-      currency = "EUR",
-      amount = 5,
-      label = "EUR5.00",
-      base = Price(
-        currency = "USD",
-        amount = 40,
-        label = "$40.00"
-      )
-    ),
-    attributes = Map(
-      "msrp_price" -> PriceWithBase(
-        amount = 10,
-        currency = "EUR",
-        label = "EUR10.00",
-        base = Some(Price(
-          amount = 100,
-          currency = "USD",
-          label = "$75.00"
-        ))
-      )
-    )
+  private val pricing5Eur = Map(
+    CurrencyKey -> "EUR",
+    SalePriceKey -> 5.0,
+    MsrpPriceKey -> 10.0
   )
 
   "Localizer" should {
@@ -113,14 +47,14 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
-      val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+      val key = s"c-$country:$itemNumber"
+      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
 
-      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
-      val expected = FlowSkuPrice(pricing50Cad)
+      val expected = FlowSkuPrice(pricing50Cad).get
 
       eventually(Timeout(3.seconds)) {
         // Verify we can retrieve by iso31663 code
@@ -144,13 +78,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
 
-      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
 
       val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
-      val expected = FlowSkuPrice(pricing50Cad)
+      val expected = FlowSkuPrice(pricing50Cad).get
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) { res =>
@@ -173,10 +107,10 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
-      val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+      val key = s"c-$country:$itemNumber"
+      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
 
-      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
@@ -186,14 +120,14 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
         whenReady(localizer.getSkuPriceByCountryWithCurrency(
           Countries.Can.iso31663, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
         ) {
-          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
+          _ shouldBe FlowSkuPrice(pricing25Eur)
         }
 
         // Verify we can retrieve by iso31662 code lowercase
         whenReady(localizer.getSkuPriceByCountryWithCurrency(
           Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
         ) {
-          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
+          _ shouldBe FlowSkuPrice(pricing25Eur)
         }
       }
     }
@@ -206,11 +140,11 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber1 = "item1"
       val itemNumber2 = "item2"
 
-      val key1 = s"country-$country:$itemNumber1"
-      val key2 = s"country-$country:$itemNumber2"
-      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+      val key1 = s"c-$country:$itemNumber1"
+      val key2 = s"c-$country:$itemNumber2"
+      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
 
-      when(localizerClient.mGet(Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
+      when(localizerClient.mGet[Array[Byte]](Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
@@ -219,8 +153,8 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
         whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
           targetCurrency = Currencies.Eur.iso42173)) { res =>
           res should have size 2
-          res(0) shouldBe Some(FlowSkuPrice(pricing25Eur))
-          res(1) shouldBe Some(FlowSkuPrice(pricing25Eur))
+          res(0) shouldBe FlowSkuPrice(pricing25Eur)
+          res(1) shouldBe FlowSkuPrice(pricing25Eur)
         }
       }
     }
@@ -233,16 +167,16 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
 
-      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
       eventually(Timeout(3.seconds)) {
         whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
+          _ shouldBe FlowSkuPrice(pricing25Eur)
         }
       }
     }
@@ -254,10 +188,10 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
-      val key = s"country-$country:$itemNumber"
-      val value: String = Json.toJson(createItem(pricing50Cad)).toString
+      val key = s"c-$country:$itemNumber"
+      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
 
-      when(localizerClient.get(key)).thenReturn(Future.successful(Some(value)))
+      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any()))
         .thenReturn(Some(BigDecimal(0.5)))
         .thenReturn(Some(BigDecimal(0.1)))
@@ -266,13 +200,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       eventually(Timeout(1.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(pricing25Eur))
+          _ shouldBe FlowSkuPrice(pricing25Eur)
         }
       }
 
       eventually(Timeout(2.seconds)) {
         whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe Some(FlowSkuPrice(pricing5Eur))
+          _ shouldBe FlowSkuPrice(pricing5Eur)
         }
       }
 

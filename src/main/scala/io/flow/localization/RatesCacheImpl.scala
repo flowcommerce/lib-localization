@@ -5,6 +5,7 @@ import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
 import io.flow.reference.{Currencies, data}
 import play.api.libs.json.Json
+import LocalizerClientConverter._
 
 import scala.concurrent.Future
 
@@ -24,7 +25,7 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
   }
 
   override def retrieveData(): Future[Option[Rates]] = {
-    localizerClient.get(RatesKey).map { optionalJson =>
+    localizerClient.get[String](RatesKey).map { optionalJson =>
       optionalJson.map { js =>
         Json.parse(js).as[Rates]
       }
