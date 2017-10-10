@@ -1,4 +1,4 @@
-lazy val commonSettings = Seq (
+lazy val commonSettings = Seq(
   name := "lib-localization",
   organization := "io.flow",
   scalaVersion in ThisBuild := "2.11.11",
