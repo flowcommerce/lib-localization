@@ -3,13 +3,8 @@ package io.flow.localization
 import javax.inject.Inject
 
 import com.twitter.finagle.redis
-import io.flow.catalog.v0.models.LocalizedItemPrice
-import io.flow.common.v0.models.PriceWithBase
-import io.flow.item.v0.models.LocalItem
-import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
 import org.velvia.MsgPack
-import play.api.libs.json.Json
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}

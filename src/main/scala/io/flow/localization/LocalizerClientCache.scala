@@ -5,7 +5,6 @@ import com.gilt.gfc.guava.cache.CacheInitializationStrategy
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
 trait LocalizerClientCache[T, K, V] extends SyncCacheImpl[K, V] with CacheConfiguration {
 
   protected[this] implicit val ec = ExecutionContext.fromExecutor(executor)

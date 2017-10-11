@@ -7,14 +7,14 @@ import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
 import io.flow.reference.v0.models.Currency
 import org.joda.time.DateTime
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
-import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers.{any, _}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

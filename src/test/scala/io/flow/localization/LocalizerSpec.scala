@@ -1,9 +1,6 @@
 package io.flow.localization
 
-import io.flow.catalog.v0.models.{LocalizedItemPrice, SubcatalogItemStatus}
-import io.flow.common.v0.models.{CatalogItemReference, ExperienceSummary, Price, PriceWithBase}
-import io.flow.item.v0.models.json._
-import io.flow.item.v0.models.{LocalItem, LocalItemPricing}
+import io.flow.localization.FlowSkuPrice._
 import io.flow.reference.data.{Countries, Currencies}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -11,13 +8,11 @@ import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import play.api.libs.json.Json
+import org.velvia.MsgPack
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import FlowSkuPrice._
-import org.velvia.MsgPack
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
 
