@@ -3,12 +3,8 @@ package io.flow.localization
 import javax.inject.Inject
 
 import com.twitter.finagle.redis
-import io.flow.catalog.v0.models.LocalizedItemPrice
-import io.flow.common.v0.models.PriceWithBase
-import io.flow.item.v0.models.LocalItem
-import io.flow.item.v0.models.json._
 import io.flow.reference.Countries
-import play.api.libs.json.Json
+import org.velvia.MsgPack
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -201,7 +197,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricings(keyProviders: Iterable[KeyProvider])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    localizerClient.mGet(keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
+    localizerClient.mGet[Array[Byte]](keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
       optionalPrices.map(toFlowSkuPrice).toList
     }
   }
@@ -209,19 +205,19 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricing(keyProvider: KeyProvider)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    localizerClient.get(keyProvider.getKey).map(toFlowSkuPrice)
+    localizerClient.get[Array[Byte]](keyProvider.getKey).map(toFlowSkuPrice)
   }
 
-  private def toFlowSkuPrice(optionalPrice: Option[String]) = {
-    optionalPrice.map { js =>
+  private def toFlowSkuPrice(optionalPrice: Option[Array[Byte]]): Option[FlowSkuPrice] = {
+    optionalPrice.flatMap { bytes =>
       FlowSkuPrice(
-        Json.parse(js).as[LocalItem].pricing
+        MsgPack.unpack(bytes).asInstanceOf[Map[String, Any]]
       )
     }
   }
 
   override def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice = {
-    val localCurrency = pricing.salePrice.currency
+    val localCurrency = pricing.currency
     if (localCurrency == targetCurrency) {
       pricing
     } else {
@@ -240,44 +236,16 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 object LocalizerImpl {
 
   private def convertWithRate(pricing: FlowSkuPrice, targetCurrency: String, rate: BigDecimal): FlowSkuPrice = {
-    FlowSkuPrice(
-      salePrice = convertLocalizedItemPrice(pricing.salePrice, targetCurrency, rate),
-      msrpPrice = pricing.msrpPrice.map(convertPrice(_, targetCurrency, rate)),
-      basePrice = pricing.basePrice.map(convertPrice(_, targetCurrency, rate)),
-      shippingSurcharge = pricing.shippingSurcharge.map(convertPrice(_, targetCurrency, rate))
-    )
-  }
-
-  private def convertLocalizedItemPrice(price: LocalizedItemPrice, targetCurrency: String, rate: BigDecimal): LocalizedItemPrice = {
-    val newAmount = (price.amount * rate).toDouble
-
-    // TODO: we need the target locale here, not the default one!
-    val format = java.text.NumberFormat.getCurrencyInstance()
-    format.setCurrency(java.util.Currency.getInstance(targetCurrency))
-
-    LocalizedItemPrice(
+    pricing.copy(
       currency = targetCurrency,
-      amount = newAmount,
-      label = format.format(newAmount),
-      base = price.base,
-      includes = price.includes
+      salePrice = convertPrice(pricing.salePrice, rate),
+      msrpPrice = pricing.msrpPrice.map(convertPrice(_, rate)),
+      basePrice = pricing.basePrice.map(convertPrice(_, rate)),
+      shippingSurcharge = pricing.shippingSurcharge.map(convertPrice(_, rate))
     )
   }
 
-  private def convertPrice(price: PriceWithBase, targetCurrency: String, rate: BigDecimal): PriceWithBase = {
-    val newAmount = (price.amount * rate).toDouble
-
-    // TODO: we need the target locale here, not the default one!
-    val format = java.text.NumberFormat.getCurrencyInstance()
-    format.setCurrency(java.util.Currency.getInstance(targetCurrency))
-
-    PriceWithBase(
-      currency = targetCurrency,
-      amount = newAmount,
-      label = format.format(newAmount),
-      base = price.base
-    )
-  }
+  private def convertPrice(amount: BigDecimal, rate: BigDecimal): BigDecimal = amount * rate
 
 }
 
@@ -288,7 +256,7 @@ private[this] sealed trait KeyProvider {
 private[this] case class CountryKey(country: String, itemNumber: String) extends KeyProvider {
   def getKey: String = {
     val code = Countries.find(country).map(_.iso31663).getOrElse(country)
-    s"country-$code:$itemNumber"
+    s"c-$code:$itemNumber"
   }
 }
 
