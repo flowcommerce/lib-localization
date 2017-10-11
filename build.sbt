@@ -3,7 +3,7 @@ lazy val commonSettings = Seq(
   organization := "io.flow",
   scalaVersion in ThisBuild := "2.11.11",
   crossScalaVersions := Seq("2.11.11", "2.10.6"),
-version := "0.0.28"
+  version := "0.0.28",
   resolvers ++= Seq(
     "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
