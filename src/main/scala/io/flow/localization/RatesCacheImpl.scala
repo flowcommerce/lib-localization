@@ -24,7 +24,7 @@ private[localization] class RatesCacheImpl(localizerClient: LocalizerClient, ove
   }
 
   override def retrieveData(): Future[Option[Rates]] = {
-    localizerClient.get(RatesKey).map { optionalJson =>
+    localizerClient.get(RatesKey, gzipped = false).map { optionalJson =>
       optionalJson.map { js =>
         Json.parse(js).as[Rates]
       }

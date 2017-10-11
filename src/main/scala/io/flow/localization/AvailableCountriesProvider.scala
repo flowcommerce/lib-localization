@@ -20,7 +20,7 @@ private[localization] class AvailableCountriesProviderCacheImpl(localizerClient:
   import AvailableCountriesProviderCacheImpl._
 
   override def retrieveData(): Future[Option[Seq[Country]]] = {
-    localizerClient.get(OrganizationCountriesKey).map { optionalJson =>
+    localizerClient.get(OrganizationCountriesKey, gzipped = false).map { optionalJson =>
       optionalJson.map { js =>
         Json.parse(js).as[CountriesData].available.flatMap(Countries.find)
       }
