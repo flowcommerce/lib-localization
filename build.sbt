@@ -3,7 +3,6 @@ lazy val commonSettings = Seq(
   organization := "io.flow",
   scalaVersion in ThisBuild := "2.11.11",
   crossScalaVersions := Seq("2.11.11", "2.10.6"),
-  version := "0.0.28",
   resolvers ++= Seq(
     "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
@@ -34,7 +33,8 @@ lazy val commonSettings = Seq(
       "com.twitter" %% "finagle-redis" % "6.30.0",
       "org.mockito" % "mockito-core" % "2.8.47" % "test",
       "org.scalatest" %% "scalatest" % "3.0.3" % "test"
-    )
+    ),
+  version := "0.0.28"
 )
 
 def generateProject(projectName: String, playVersion: String) = {
