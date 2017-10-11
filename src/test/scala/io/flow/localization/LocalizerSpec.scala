@@ -4,17 +4,15 @@ import io.flow.localization.FlowSkuPrice._
 import io.flow.reference.data.{Countries, Currencies}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.concurrent.PatienceConfiguration.Timeout
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import org.velvia.MsgPack
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
-class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventually with ScalaFutures {
+class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaFutures {
 
   private val pricing50Cad = Map(
     CurrencyKey -> "CAD",
@@ -34,6 +32,20 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
     MsrpPriceKey -> 10.0
   )
 
+  // { "i": "Includes VAT and duty", "c": "PHP", "b": 9100, "m": 22000, "t": 1507581191, "a": 16400 }
+  private val serializedPricing = Array(134, 161, 105, 181, 73, 110, 99, 108, 117, 100, 101, 115, 32, 86, 65, 84, 32,
+    97, 110, 100, 32, 100, 117, 116, 121, 161, 99, 163, 80, 72, 80, 161, 98, 205, 35, 140, 161, 109, 205, 85, 240, 161,
+    116, 206, 89, 219, 221, 7, 161, 97, 205, 64, 16).map(_.toByte)
+
+  private val deserializedPricing = Map[String, Any](
+    "i" -> "Includes VAT and duty",
+    "c" -> "PHP",
+    "b" -> 9100,
+    "m" -> 22000,
+    "t" -> 1507581191,
+    "a" -> 16400
+  )
+
   "Localizer" should {
 
     "retrieve a localized pricing by country" in {
@@ -51,18 +63,35 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val expected = FlowSkuPrice(pricing50Cad).get
 
-      eventually(Timeout(3.seconds)) {
-        // Verify we can retrieve by iso31663 code
-        whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
-          res shouldBe Some(expected)
-          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
-        }
+      // Verify we can retrieve by iso31663 code
+      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
+      }
 
-        // Verify we can retrieve by iso31662 code lowercase
-        whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
-          res shouldBe Some(expected)
-          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
-        }
+      // Verify we can retrieve by iso31662 code lowercase
+      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
+      }
+    }
+
+    "retrieve a localized pricing by country - using serialized data" in {
+      val localizerClient = mock[LocalizerClient]
+
+      val country = Countries.Can.iso31663
+      val itemNumber = "item123"
+
+      val key = s"c-$country:$itemNumber"
+      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(serializedPricing)))
+
+      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
+
+      val expected = FlowSkuPrice(deserializedPricing).get
+
+      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }
     }
 
@@ -81,17 +110,15 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val expected = FlowSkuPrice(pricing50Cad).get
 
-      eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) { res =>
-          res shouldBe Some(expected)
-          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
-        }
+      whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) { res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
+      }
 
-        // Verify case insensitive
-        whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {res =>
-          res shouldBe Some(expected)
-          res.get.msrpPrice.get shouldBe expected.msrpPrice.get
-        }
+      // Verify case insensitive
+      whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }
     }
 
@@ -110,20 +137,18 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
-      eventually(Timeout(3.seconds)) {
-        // Verify we can retrieve by iso31663 code
-        whenReady(localizer.getSkuPriceByCountryWithCurrency(
-          Countries.Can.iso31663, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
-        ) {
-          _ shouldBe FlowSkuPrice(pricing25Eur)
-        }
+      // Verify we can retrieve by iso31663 code
+      whenReady(localizer.getSkuPriceByCountryWithCurrency(
+        Countries.Can.iso31663, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
+      ) {
+        _ shouldBe FlowSkuPrice(pricing25Eur)
+      }
 
-        // Verify we can retrieve by iso31662 code lowercase
-        whenReady(localizer.getSkuPriceByCountryWithCurrency(
-          Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
-        ) {
-          _ shouldBe FlowSkuPrice(pricing25Eur)
-        }
+      // Verify we can retrieve by iso31662 code lowercase
+      whenReady(localizer.getSkuPriceByCountryWithCurrency(
+        Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
+      ) {
+        _ shouldBe FlowSkuPrice(pricing25Eur)
       }
     }
 
@@ -144,13 +169,11 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
-      eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
-          targetCurrency = Currencies.Eur.iso42173)) { res =>
-          res should have size 2
-          res(0) shouldBe FlowSkuPrice(pricing25Eur)
-          res(1) shouldBe FlowSkuPrice(pricing25Eur)
-        }
+      whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
+        targetCurrency = Currencies.Eur.iso42173)) { res =>
+        res should have size 2
+        res(0) shouldBe FlowSkuPrice(pricing25Eur)
+        res(1) shouldBe FlowSkuPrice(pricing25Eur)
       }
     }
 
@@ -169,10 +192,8 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
-      eventually(Timeout(3.seconds)) {
-        whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe FlowSkuPrice(pricing25Eur)
-        }
+      whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        _ shouldBe FlowSkuPrice(pricing25Eur)
       }
     }
 
@@ -193,16 +214,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with Eventu
 
       val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
 
-      eventually(Timeout(1.seconds)) {
-        whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe FlowSkuPrice(pricing25Eur)
-        }
+      whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        _ shouldBe FlowSkuPrice(pricing25Eur)
       }
 
-      eventually(Timeout(2.seconds)) {
-        whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-          _ shouldBe FlowSkuPrice(pricing5Eur)
-        }
+      whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
+        _ shouldBe FlowSkuPrice(pricing5Eur)
       }
 
     }
