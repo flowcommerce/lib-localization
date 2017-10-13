@@ -2,9 +2,10 @@ package io.flow.localization
 
 import javax.inject.Inject
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.twitter.finagle.redis
 import io.flow.reference.Countries
-import org.velvia.MsgPack
+import org.msgpack.jackson.dataformat.MessagePackFactory
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -165,6 +166,8 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   import LocalizerImpl._
 
+  private val mapper = new ObjectMapper(new MessagePackFactory())
+
   override def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
@@ -210,9 +213,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
 
   private def toFlowSkuPrice(optionalPrice: Option[Array[Byte]]): Option[FlowSkuPrice] = {
     optionalPrice.flatMap { bytes =>
-      FlowSkuPrice(
-        MsgPack.unpack(bytes).asInstanceOf[Map[String, Any]]
-      )
+      FlowSkuPrice(mapper.readValue(bytes, classOf[java.util.Map[String, Any]]))
     }
   }
 

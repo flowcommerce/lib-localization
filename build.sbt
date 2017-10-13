@@ -6,8 +6,7 @@ lazy val commonSettings = Seq(
   resolvers ++= Seq(
     "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-    "Artifactory" at "https://flow.artifactoryonline.com/flow/libs-release/",
-    "velvia maven" at "http://dl.bintray.com/velvia/maven"
+    "Artifactory" at "https://flow.artifactoryonline.com/flow/libs-release/"
   ),
   
   credentials += Credentials(
@@ -32,7 +31,8 @@ lazy val commonSettings = Seq(
       "io.flow" %% "lib-reference-scala" % "0.1.30",
       "javax.inject" % "javax.inject" % "1",
       "com.twitter" %% "finagle-redis" % "6.30.0",
-      "org.velvia" %% "msgpack4s" % "0.5.2",
+      "org.msgpack" % "msgpack-core" % "0.7.1",
+      "org.msgpack" % "jackson-dataformat-msgpack" % "0.7.1",
       "org.mockito" % "mockito-core" % "2.8.47" % "test",
       "org.scalatest" %% "scalatest" % "3.0.3" % "test"
     ),
