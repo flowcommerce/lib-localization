@@ -23,7 +23,7 @@ object FlowSkuPrice {
   val ShippingSurchargeKey = "s"
   val IncludesLabelKey = "i"
 
-  def apply(attributes: Map[String, Any]): Option[FlowSkuPrice] = {
+  def apply(attributes: java.util.Map[String, Any]): Option[FlowSkuPrice] = {
     for {
       currency <- get[String](attributes, CurrencyKey)
       amount <- get[Number](attributes, SalePriceKey).map(_.doubleValue())
@@ -37,7 +37,7 @@ object FlowSkuPrice {
     )
   }
 
-  private def get[T: ClassTag](attributes: Map[String, Any], key: String): Option[T] =
-    attributes.get(key).collect { case v: T => v }
+  private def get[T: ClassTag](attributes: java.util.Map[String, Any], key: String): Option[T] =
+    Option(attributes.get(key)).collect { case v: T => v }
 
 }

@@ -1,13 +1,15 @@
 package io.flow.localization
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.flow.localization.FlowSkuPrice._
 import io.flow.reference.data.{Countries, Currencies}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
+import org.msgpack.jackson.dataformat.MessagePackFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import org.velvia.MsgPack
+import scala.collection.JavaConverters._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -18,19 +20,19 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     CurrencyKey -> "CAD",
     SalePriceKey -> 50.0,
     MsrpPriceKey -> 100.0
-  )
+  ).asJava
 
   private val pricing25Eur = Map(
     CurrencyKey -> "EUR",
     SalePriceKey -> 25.0,
     MsrpPriceKey -> 50.0
-  )
+  ).asJava
 
   private val pricing5Eur = Map(
     CurrencyKey -> "EUR",
     SalePriceKey -> 5.0,
     MsrpPriceKey -> 10.0
-  )
+  ).asJava
 
   // { "i": "Includes VAT and duty", "c": "PHP", "b": 9100, "m": 22000, "t": 1507581191, "a": 16400 }
   private val serializedPricing = Array(134, 161, 105, 181, 73, 110, 99, 108, 117, 100, 101, 115, 32, 86, 65, 84, 32,
@@ -44,7 +46,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     "m" -> 22000,
     "t" -> 1507581191,
     "a" -> 16400
-  )
+  ).asJava
 
   "Localizer" should {
 
@@ -55,7 +57,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val itemNumber = "item123"
 
       val key = s"c-$country:$itemNumber"
-      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
       when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
 
@@ -102,7 +104,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
       when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
 
@@ -130,7 +132,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val itemNumber = "item123"
 
       val key = s"c-$country:$itemNumber"
-      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
       when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
@@ -162,7 +164,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
 
       val key1 = s"c-$country:$itemNumber1"
       val key2 = s"c-$country:$itemNumber2"
-      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
       when(localizerClient.mGet[Array[Byte]](Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
@@ -185,7 +187,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val itemNumber = "item123"
 
       val key = s"experience-$experienceKey:$itemNumber"
-      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
       when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
@@ -205,7 +207,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val itemNumber = "item123"
 
       val key = s"c-$country:$itemNumber"
-      val value: Array[Byte] = MsgPack.pack(pricing50Cad)
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
       when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any()))
