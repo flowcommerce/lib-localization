@@ -36,7 +36,7 @@ lazy val commonSettings = Seq(
       "org.mockito" % "mockito-core" % "2.8.47" % "test",
       "org.scalatest" %% "scalatest" % "3.0.3" % "test"
     ),
-version := "0.0.31"
+version := "0.0.32"
 )
 
 def generateProject(projectName: String, playVersion: String) = {
