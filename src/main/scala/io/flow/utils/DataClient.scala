@@ -1,4 +1,4 @@
-package io.flow.localization
+package io.flow.utils
 
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise => ScalaPromise}
 
-trait LocalizerClient {
+trait DataClient {
 
   /**
     * Returns the value associated with the specified key, if any
@@ -24,43 +24,43 @@ trait LocalizerClient {
 
 }
 
-class RedisLocalizerClient @Inject() (redisClient: redis.Client) extends LocalizerClient {
+class RedisDataClient @Inject() (redisClient: redis.Client) extends DataClient {
 
-  private val log = LoggerFactory.getLogger(getClass)
+    private val log = LoggerFactory.getLogger(getClass)
 
-  import StandardCharsets._
+    import StandardCharsets._
 
-  import RedisLocalizerClient._
+    import RedisDataClient._
 
-  override def get[T](key: String)(implicit converter: Array[Byte] => T = identity _, ec: ExecutionContext): Future[Option[T]] = {
-    redisClient
-      .get(ChannelBuffers.copiedBuffer(key, UTF_8))
-      .asScala
-      .map(_.map(c => converter(toArray(c))))
-      .recover {
-        case ex: Throwable => {
-          log.warn(s"FlowError - failed to get key $key from redis cache. ${ex.getMessage}", ex)
-          None
+    override def get[T](key: String)(implicit converter: Array[Byte] => T = identity _, ec: ExecutionContext): Future[Option[T]] = {
+      redisClient
+        .get(ChannelBuffers.copiedBuffer(key, UTF_8))
+        .asScala
+        .map(_.map(c => converter(toArray(c))))
+        .recover {
+          case ex: Throwable => {
+            log.warn(s"FlowError - failed to get key $key from redis cache. ${ex.getMessage}", ex)
+            None
+          }
         }
-      }
-  }
+    }
 
-  override def mGet[T](keys: Seq[String])(implicit converter: Array[Byte] => T = identity _, ec: ExecutionContext): Future[Seq[Option[T]]] = {
-    redisClient
-      .mGet(keys.map(ChannelBuffers.copiedBuffer(_, UTF_8)))
-      .asScala
-      .map(_.map(_.map(c => converter(toArray(c)))))
-      .recover {
-        case ex: Throwable => {
-          log.warn(s"FlowError - failed to mget keys ${keys.mkString(", ")} from redis cache. ${ex.getMessage}", ex)
-          Nil
+    override def mGet[T](keys: Seq[String])(implicit converter: Array[Byte] => T = identity _, ec: ExecutionContext): Future[Seq[Option[T]]] = {
+      redisClient
+        .mGet(keys.map(ChannelBuffers.copiedBuffer(_, UTF_8)))
+        .asScala
+        .map(_.map(_.map(c => converter(toArray(c)))))
+        .recover {
+          case ex: Throwable => {
+            log.warn(s"FlowError - failed to mget keys ${keys.mkString(", ")} from redis cache. ${ex.getMessage}", ex)
+            Nil
+          }
         }
-      }
-  }
+    }
 
 }
 
-object RedisLocalizerClient {
+object RedisDataClient {
 
   // as defined in https://twitter.github.io/util/guide/util-cookbook/futures.html
   private implicit class RichTwitterFuture[A](val tf: TwitterFuture[A]) extends AnyVal {
@@ -88,7 +88,9 @@ object RedisLocalizerClient {
 
 }
 
-object LocalizerClientConverter {
+object DataClientConversions {
+
   implicit def identityConverter(bytes: Array[Byte]): Array[Byte] = bytes
   implicit def utf8StringConverter(bytes: Array[Byte]): String = new String(bytes, StandardCharsets.UTF_8)
+
 }

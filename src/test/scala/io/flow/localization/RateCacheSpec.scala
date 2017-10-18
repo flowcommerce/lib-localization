@@ -6,6 +6,7 @@ import io.flow.published.event.v0.models.OrganizationRatesData
 import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
 import io.flow.reference.v0.models.Currency
+import io.flow.utils.DataClient
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
@@ -39,25 +40,25 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
   "RatesCache" should {
 
     "retrieve the rates" in {
-      val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
+      val dataClient = mock[DataClient]
+      when(dataClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
 
-      val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
+      val ratesCache = new RatesCacheImpl(dataClient, 1.minute.toMillis)
       ratesCache.start()
 
       ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(0.5))
     }
 
     "refresh the rates" in {
-      val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
+      val dataClient = mock[DataClient]
+      when(dataClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
         // first call with a rate of 0.5
         .thenReturn(Future.successful(Some(Json.toJson(firstRates).toString)))
         // second call with a rate of 0.1
         .thenReturn(Future.successful(Some(Json.toJson(secondRates).toString)))
 
-      val ratesCache = new RatesCacheImpl(localizerClient, 100.millis.toMillis)
+      val ratesCache = new RatesCacheImpl(dataClient, 100.millis.toMillis)
       ratesCache.start()
 
       ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(0.5))
@@ -74,11 +75,11 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       )
       val originalRates = OrganizationRatesData(rates = rates)
 
-      val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
+      val dataClient = mock[DataClient]
+      when(dataClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
         .thenReturn(Future.successful(Some(Json.toJson(originalRates).toString)))
 
-      val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
+      val ratesCache = new RatesCacheImpl(dataClient, 1.minute.toMillis)
       ratesCache.start()
 
       ratesCache.get(Currencies.Usd.iso42173, Currencies.Usd.iso42173) shouldBe Some(BigDecimal(1))
@@ -105,11 +106,11 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
   }
 
   "return empty rates if key is missing" in {
-    val localizerClient = mock[LocalizerClient]
-    when(localizerClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
+    val dataClient = mock[DataClient]
+    when(dataClient.get[String](ArgumentMatchers.eq(RatesKey))(any(), any()))
       .thenReturn(Future.successful(None))
 
-    val ratesCache = new RatesCacheImpl(localizerClient, 1.minute.toMillis)
+    val ratesCache = new RatesCacheImpl(dataClient, 1.minute.toMillis)
     ratesCache.start()
 
     ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe None

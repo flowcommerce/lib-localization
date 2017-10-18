@@ -4,7 +4,9 @@ import javax.inject.Inject
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.twitter.finagle.redis
+import io.flow.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
 import io.flow.reference.Countries
+import io.flow.utils.{DataClient, RedisDataClient}
 import org.msgpack.jackson.dataformat.MessagePackFactory
 
 import scala.concurrent.duration._
@@ -139,21 +141,22 @@ object Localizer {
   private val DefaultRatesRefreshPeriod = FiniteDuration(1, MINUTES)
 
   /**
-    * Creates a new [[Localizer]] backed by [[RedisLocalizerClient]]
+    * Creates a new [[Localizer]] backed by [[RedisDataClient]]
+    *
     * @param redisClient the redis client to use to connect to redis
-    * @return a new [[Localizer]] backed by [[RedisLocalizerClient]]
+    * @return a new [[Localizer]] backed by [[RedisDataClient]]
     */
   def apply(redisClient: redis.Client, ratesRefreshPeriod: FiniteDuration = DefaultRatesRefreshPeriod): Localizer = {
-    val localizerClient = new RedisLocalizerClient(redisClient)
+    val dataClient = new RedisDataClient(redisClient)
 
-    val rateProvider = new RatesCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
+    val rateProvider = new RatesCacheImpl(dataClient, ratesRefreshPeriod.toMillis)
     rateProvider.start()
 
-    val availableCountriesProvider = new AvailableCountriesProviderCacheImpl(localizerClient, ratesRefreshPeriod.toMillis)
+    val availableCountriesProvider = new AvailableCountriesProviderCacheImpl(dataClient, ratesRefreshPeriod.toMillis)
     availableCountriesProvider.start()
 
     new LocalizerImpl(
-      localizerClient = localizerClient,
+      dataClient = dataClient,
       rateProvider = rateProvider,
       availableCountriesProvider = availableCountriesProvider
     )
@@ -161,7 +164,7 @@ object Localizer {
 
 }
 
-class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: RateProvider,
+class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvider,
                                availableCountriesProvider: AvailableCountriesProvider) extends Localizer {
 
   import LocalizerImpl._
@@ -200,7 +203,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricings(keyProviders: Iterable[KeyProvider])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    localizerClient.mGet[Array[Byte]](keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
+    dataClient.mGet[Array[Byte]](keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
       optionalPrices.map(toFlowSkuPrice).toList
     }
   }
@@ -208,7 +211,7 @@ class LocalizerImpl @Inject() (localizerClient: LocalizerClient, rateProvider: R
   private def getPricing(keyProvider: KeyProvider)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    localizerClient.get[Array[Byte]](keyProvider.getKey).map(toFlowSkuPrice)
+    dataClient.get[Array[Byte]](keyProvider.getKey).map(toFlowSkuPrice)
   }
 
   private def toFlowSkuPrice(optionalPrice: Option[Array[Byte]]): Option[FlowSkuPrice] = {
