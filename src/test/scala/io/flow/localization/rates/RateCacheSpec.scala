@@ -2,11 +2,11 @@ package io.flow.localization.rates
 
 import io.flow.currency.v0.models.Rate
 import io.flow.localization.rates.RatesCacheImpl._
+import io.flow.localization.utils.DataClient
 import io.flow.published.event.v0.models.OrganizationRatesData
 import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
 import io.flow.reference.v0.models.Currency
-import io.flow.localization.utils.DataClient
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
@@ -62,7 +62,7 @@ class RateCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventu
       ratesCache.start()
 
       ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(0.5))
-      eventually(Timeout(200.millis)) {
+      eventually(Timeout(1.second)) {
         ratesCache.get(Currencies.Cad.iso42173, Currencies.Eur.iso42173) shouldBe Some(BigDecimal(0.1))
       }
     }

@@ -46,7 +46,7 @@ class TransitWindowsCacheSpec extends FlatSpec with MockitoSugar with Matchers w
     transitWindowCache.get(TransitWindowKey("CAN", "USD")) shouldBe Some(DayRange(1, 7))
     transitWindowCache.get(TransitWindowKey("CAN", "CHN")) shouldBe Some(DayRange(4, 9))
 
-    eventually(Timeout(300.millis)) {
+    eventually(Timeout(1.second)) {
       transitWindowCache.get(TransitWindowKey("USD", "CAN")) shouldBe Some(DayRange(2, 6))
       transitWindowCache.get(TransitWindowKey("CAN", "USD")) shouldBe Some(DayRange(3, 4))
       transitWindowCache.get(TransitWindowKey("CAN", "CHN")) shouldBe Some(DayRange(4, 11))

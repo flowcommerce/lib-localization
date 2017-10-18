@@ -50,7 +50,7 @@ class AvailableCountriesCacheSpec extends WordSpec with MockitoSugar with Matche
       countriesCache.isEnabled("USA") shouldBe false
       countriesCache.isEnabled("usa") shouldBe false
 
-      eventually(Timeout(200.millis)) {
+      eventually(Timeout(1.second)) {
         countriesCache.isEnabled("FRA") shouldBe false
         countriesCache.isEnabled("fr") shouldBe false
         countriesCache.isEnabled("USA") shouldBe true
