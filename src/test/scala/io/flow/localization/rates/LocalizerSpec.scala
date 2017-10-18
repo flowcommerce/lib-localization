@@ -1,16 +1,19 @@
-package io.flow.localization
+package io.flow.localization.rates
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.flow.localization.FlowSkuPrice._
+import io.flow.localization.countries.AvailableCountriesProvider
+import io.flow.localization.pricing.FlowSkuPrice._
+import io.flow.localization.pricing.FlowSkuPrice
 import io.flow.reference.data.{Countries, Currencies}
+import io.flow.localization.utils.DataClient
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.msgpack.jackson.dataformat.MessagePackFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -51,7 +54,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
   "Localizer" should {
 
     "retrieve a localized pricing by country" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
 
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
@@ -59,9 +62,9 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val key = s"c-$country:$itemNumber"
       val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
-      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       val expected = FlowSkuPrice(pricing50Cad).get
 
@@ -79,15 +82,15 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "retrieve a localized pricing by country - using serialized data" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
 
       val country = Countries.Can.iso31663
       val itemNumber = "item123"
 
       val key = s"c-$country:$itemNumber"
-      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(serializedPricing)))
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(serializedPricing)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       val expected = FlowSkuPrice(deserializedPricing).get
 
@@ -98,7 +101,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "retrieve a localized pricing by experience" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
 
       val experienceKey = "canada-2"
       val itemNumber = "item123"
@@ -106,9 +109,9 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val key = s"experience-$experienceKey:$itemNumber"
       val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
-      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, mock[RateProvider], mock[AvailableCountriesProvider])
 
       val expected = FlowSkuPrice(pricing50Cad).get
 
@@ -125,7 +128,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "retrieve and convert a localized pricing by country" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
       val rateProvider = mock[RateProvider]
 
       val country = Countries.Can.iso31663
@@ -134,10 +137,10 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val key = s"c-$country:$itemNumber"
       val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
-      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
 
       // Verify we can retrieve by iso31663 code
       whenReady(localizer.getSkuPriceByCountryWithCurrency(
@@ -155,7 +158,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "retrieve and convert localized pricings by country" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
       val rateProvider = mock[RateProvider]
 
       val country = Countries.Can.iso31663
@@ -166,10 +169,10 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val key2 = s"c-$country:$itemNumber2"
       val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
-      when(localizerClient.mGet[Array[Byte]](Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
+      when(dataClient.mGet[Array[Byte]](Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), Some(value))))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
 
       whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
         targetCurrency = Currencies.Eur.iso42173)) { res =>
@@ -180,7 +183,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "retrieve and convert a localized pricing by experience" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
       val rateProvider = mock[RateProvider]
 
       val experienceKey = "canada-2"
@@ -189,10 +192,10 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val key = s"experience-$experienceKey:$itemNumber"
       val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
-      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
 
       whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
         _ shouldBe FlowSkuPrice(pricing25Eur)
@@ -200,7 +203,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "update rates" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
       val rateProvider = mock[RateProvider]
 
       val country = Countries.Can.iso31663
@@ -209,12 +212,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val key = s"c-$country:$itemNumber"
       val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
 
-      when(localizerClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
       when(rateProvider.get(any(), any()))
         .thenReturn(Some(BigDecimal(0.5)))
         .thenReturn(Some(BigDecimal(0.1)))
 
-      val localizer = new LocalizerImpl(localizerClient, rateProvider, mock[AvailableCountriesProvider])
+      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
 
       whenReady(localizer.getSkuPriceByCountryWithCurrency(country, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
         _ shouldBe FlowSkuPrice(pricing25Eur)
@@ -227,13 +230,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     }
 
     "return if a country is enabled" in {
-      val localizerClient = mock[LocalizerClient]
+      val dataClient = mock[DataClient]
 
       val availableCountriesProvider = mock[AvailableCountriesProvider]
       when(availableCountriesProvider.isEnabled("FRA")).thenReturn(true)
       when(availableCountriesProvider.isEnabled("CAN")).thenReturn(false)
 
-      val localizer = new LocalizerImpl(localizerClient, mock[RateProvider], availableCountriesProvider)
+      val localizer = new LocalizerImpl(dataClient, mock[RateProvider], availableCountriesProvider)
 
       localizer.isEnabled("FRA") shouldBe true
       localizer.isEnabled("CAN") shouldBe false

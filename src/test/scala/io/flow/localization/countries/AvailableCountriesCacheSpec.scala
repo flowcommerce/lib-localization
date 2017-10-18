@@ -1,7 +1,8 @@
-package io.flow.localization
+package io.flow.localization.countries
 
 import io.flow.published.event.v0.models.OrganizationCountriesData
 import io.flow.published.event.v0.models.json._
+import io.flow.localization.utils.DataClient
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when
@@ -14,7 +15,7 @@ import play.api.libs.json.Json
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
+class AvailableCountriesCacheSpec extends WordSpec with MockitoSugar with Matchers with Eventually {
 
   val firstCountries = OrganizationCountriesData(available = Seq("FRA"))
   val secondCountries = OrganizationCountriesData(available = Seq("USA", "CAN"))
@@ -22,11 +23,11 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
   "AvailableCountriesProviderCache" should {
 
     "retrieve the enabled countries case insensitively" in {
-      val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get[String](ArgumentMatchers.eq("organization_countries"))(any(), any()))
+      val dataClient = mock[DataClient]
+      when(dataClient.get[String](ArgumentMatchers.eq("organization_countries"))(any(), any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstCountries).toString)))
 
-      val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 1.minute.toMillis)
+      val countriesCache = new AvailableCountriesProviderCacheImpl(dataClient, 1.minute.toMillis)
       countriesCache.start()
 
       countriesCache.isEnabled("FRA") shouldBe true
@@ -36,12 +37,12 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
     }
 
     "refresh the enabled countries and retrieve case insensitively" in {
-      val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get[String](ArgumentMatchers.eq("organization_countries"))(any(), any()))
+      val dataClient = mock[DataClient]
+      when(dataClient.get[String](ArgumentMatchers.eq("organization_countries"))(any(), any()))
         .thenReturn(Future.successful(Some(Json.toJson(firstCountries).toString)))
         .thenReturn(Future.successful(Some(Json.toJson(secondCountries).toString)))
 
-      val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 100.millis.toMillis)
+      val countriesCache = new AvailableCountriesProviderCacheImpl(dataClient, 100.millis.toMillis)
       countriesCache.start()
 
       countriesCache.isEnabled("FRA") shouldBe true
@@ -49,7 +50,7 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
       countriesCache.isEnabled("USA") shouldBe false
       countriesCache.isEnabled("usa") shouldBe false
 
-      eventually(Timeout(200.millis)) {
+      eventually(Timeout(1.second)) {
         countriesCache.isEnabled("FRA") shouldBe false
         countriesCache.isEnabled("fr") shouldBe false
         countriesCache.isEnabled("USA") shouldBe true
@@ -59,11 +60,11 @@ class AvailableCountriesProviderCacheSpec extends WordSpec with MockitoSugar wit
     }
 
     "return no enabled countries if key is missing" in {
-      val localizerClient = mock[LocalizerClient]
-      when(localizerClient.get[String](ArgumentMatchers.eq("organization_countries"))(any(), any()))
+      val dataClient = mock[DataClient]
+      when(dataClient.get[String](ArgumentMatchers.eq("organization_countries"))(any(), any()))
         .thenReturn(Future.successful(None))
 
-      val countriesCache = new AvailableCountriesProviderCacheImpl(localizerClient, 1.minute.toMillis)
+      val countriesCache = new AvailableCountriesProviderCacheImpl(dataClient, 1.minute.toMillis)
       countriesCache.start()
 
       countriesCache.isEnabled("FRA") shouldBe false

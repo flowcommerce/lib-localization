@@ -1,9 +1,10 @@
-package io.flow.localization
+package io.flow.localization.rates
 
 import java.nio.charset.StandardCharsets.UTF_8
 
 import com.twitter.finagle.redis
 import com.twitter.util.Future
+import io.flow.localization.utils.RedisDataClient
 import org.jboss.netty.buffer.ChannelBuffers
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
@@ -14,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class RedisLocalizerClientSpec extends WordSpec with MockitoSugar with Matchers with ScalaFutures {
 
-  import LocalizerClientConverter._
+  import io.flow.localization.utils.DataClientConversions._
 
   "RedisLocalizerClient" should {
 
@@ -23,9 +24,9 @@ class RedisLocalizerClientSpec extends WordSpec with MockitoSugar with Matchers 
       val key = "key"
       val client = mock[redis.Client]
       when(client.get(ChannelBuffers.copiedBuffer(key, UTF_8))).thenReturn(Future.value(Some(ChannelBuffers.wrappedBuffer(res.getBytes(UTF_8)))))
-      val localizerClient = new RedisLocalizerClient(client)
+      val dataClient = new RedisDataClient(client)
 
-      whenReady(localizerClient.get[String](key)) { result =>
+      whenReady(dataClient.get[String](key)) { result =>
         result.get shouldBe res
       }
     }
@@ -36,9 +37,9 @@ class RedisLocalizerClientSpec extends WordSpec with MockitoSugar with Matchers 
       val redisKeys = keys.map(ChannelBuffers.copiedBuffer(_, UTF_8))
       val client = mock[redis.Client]
       when(client.mGet(redisKeys)).thenReturn(Future.value(res.map(r => Some(ChannelBuffers.wrappedBuffer(r.getBytes(UTF_8))))))
-      val localizerClient = new RedisLocalizerClient(client)
+      val dataClient = new RedisDataClient(client)
 
-      whenReady(localizerClient.mGet[String](keys)) { results =>
+      whenReady(dataClient.mGet[String](keys)) { results =>
         results should have size 2
         results.map(_.get) should contain theSameElementsInOrderAs res
       }
@@ -49,9 +50,9 @@ class RedisLocalizerClientSpec extends WordSpec with MockitoSugar with Matchers 
       val key = "key"
       val client = mock[redis.Client]
       when(client.get(ChannelBuffers.copiedBuffer(key, UTF_8))).thenReturn(Future.value(Some(ChannelBuffers.wrappedBuffer(res))))
-      val localizerClient = new RedisLocalizerClient(client)
+      val dataClient = new RedisDataClient(client)
 
-      whenReady(localizerClient.get[Array[Byte]](key)) { result =>
+      whenReady(dataClient.get[Array[Byte]](key)) { result =>
         result.get shouldBe res
       }
     }
@@ -62,9 +63,9 @@ class RedisLocalizerClientSpec extends WordSpec with MockitoSugar with Matchers 
       val redisKeys = keys.map(ChannelBuffers.copiedBuffer(_, UTF_8))
       val client = mock[redis.Client]
       when(client.mGet(redisKeys)).thenReturn(Future.value(res.map(r => Some(ChannelBuffers.wrappedBuffer(r)))))
-      val localizerClient = new RedisLocalizerClient(client)
+      val redisDataClient = new RedisDataClient(client)
 
-      whenReady(localizerClient.mGet[Array[Byte]](keys)) { results =>
+      whenReady(redisDataClient.mGet[Array[Byte]](keys)) { results =>
         results should have size 2
         results.map(_.get) should contain theSameElementsInOrderAs res
       }

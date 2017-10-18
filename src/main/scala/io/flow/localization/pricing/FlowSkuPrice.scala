@@ -1,4 +1,4 @@
-package io.flow.localization
+package io.flow.localization.pricing
 
 import scala.reflect.ClassTag
 
