@@ -1,8 +1,8 @@
-package io.flow.countries
+package io.flow.localization.countries
 
 import io.flow.published.event.v0.models.OrganizationCountriesData
 import io.flow.published.event.v0.models.json._
-import io.flow.utils.DataClient
+import io.flow.localization.utils.DataClient
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when

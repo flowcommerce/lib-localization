@@ -1,11 +1,11 @@
-package io.flow.countries
+package io.flow.localization.countries
 
 import io.flow.published.event.v0.models.{OrganizationCountriesData => CountriesData}
 import io.flow.reference.Countries
 import io.flow.reference.v0.models.Country
-import io.flow.utils.DataClientConversions._
+import io.flow.localization.utils.DataClientConversions._
 import io.flow.published.event.v0.models.json._
-import io.flow.utils.{Cache, DataClient}
+import io.flow.localization.utils.{Cache, DataClient}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -16,7 +16,7 @@ trait AvailableCountriesProvider {
 
 }
 
-private[flow] class AvailableCountriesProviderCacheImpl(dataClient: DataClient, override val refreshPeriodMs: Long)
+private[localization] class AvailableCountriesProviderCacheImpl(dataClient: DataClient, override val refreshPeriodMs: Long)
   extends Cache[Seq[Country], String, Object] with AvailableCountriesProvider {
 
   import AvailableCountriesProviderCacheImpl._

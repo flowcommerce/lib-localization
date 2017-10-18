@@ -1,12 +1,12 @@
-package io.flow.localization
+package io.flow.localization.rates
 
-import io.flow.localization.RatesCacheImpl.RateKey
+import io.flow.localization.rates.RatesCacheImpl.RateKey
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatesData => Rates}
 import io.flow.reference.{Currencies, data}
 import play.api.libs.json.Json
-import io.flow.utils.DataClientConversions._
-import io.flow.utils.{Cache, DataClient}
+import io.flow.localization.utils.DataClientConversions._
+import io.flow.localization.utils.{Cache, DataClient}
 
 import scala.concurrent.Future
 
@@ -16,7 +16,7 @@ private[this] trait RateProvider {
 
 }
 
-private[localization] class RatesCacheImpl(dataClient: DataClient, override val refreshPeriodMs: Long)
+private[rates] class RatesCacheImpl(dataClient: DataClient, override val refreshPeriodMs: Long)
   extends Cache[Rates, RateKey, BigDecimal] with RateProvider {
 
   import RatesCacheImpl._
@@ -44,7 +44,7 @@ private[localization] class RatesCacheImpl(dataClient: DataClient, override val 
 
 }
 
-private[localization] object RatesCacheImpl {
+private[rates] object RatesCacheImpl {
 
   // (Base, Target)
   type RateKey = (String, String)

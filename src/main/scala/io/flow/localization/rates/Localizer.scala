@@ -1,12 +1,13 @@
-package io.flow.localization
+package io.flow.localization.rates
 
 import javax.inject.Inject
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.twitter.finagle.redis
-import io.flow.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
+import io.flow.localization.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
+import io.flow.localization.pricing.FlowSkuPrice
 import io.flow.reference.Countries
-import io.flow.utils.{DataClient, RedisDataClient}
+import io.flow.localization.utils.{DataClient, RedisDataClient}
 import org.msgpack.jackson.dataformat.MessagePackFactory
 
 import scala.concurrent.duration._

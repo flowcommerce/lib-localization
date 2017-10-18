@@ -1,11 +1,11 @@
-package io.flow.transit
+package io.flow.localization.transit
 
 import javax.inject.Inject
 
 import com.twitter.finagle.redis
-import io.flow.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
-import io.flow.transit.utils.{DayRange, TransitWindowKey}
-import io.flow.utils.RedisDataClient
+import io.flow.localization.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
+import io.flow.localization.transit.utils.{DayRange, TransitWindowKey}
+import io.flow.localization.utils.RedisDataClient
 
 import scala.concurrent.duration.{FiniteDuration, MINUTES}
 

@@ -1,10 +1,10 @@
-package io.flow.transit
+package io.flow.localization.transit
 
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatecardTransitWindowsData, TransitWindow}
-import io.flow.transit.utils.{DayRange, TransitWindowKey}
-import io.flow.transit.TransitWindowsCacheSpec._
-import io.flow.utils.DataClient
+import io.flow.localization.transit.utils.{DayRange, TransitWindowKey}
+import io.flow.localization.transit.TransitWindowsCacheSpec._
+import io.flow.localization.utils.DataClient
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -46,7 +46,7 @@ class TransitWindowsCacheSpec extends FlatSpec with MockitoSugar with Matchers w
     transitWindowCache.get(TransitWindowKey("CAN", "USD")) shouldBe Some(DayRange(1, 7))
     transitWindowCache.get(TransitWindowKey("CAN", "CHN")) shouldBe Some(DayRange(4, 9))
 
-    eventually(Timeout(200.millis)) {
+    eventually(Timeout(300.millis)) {
       transitWindowCache.get(TransitWindowKey("USD", "CAN")) shouldBe Some(DayRange(2, 6))
       transitWindowCache.get(TransitWindowKey("CAN", "USD")) shouldBe Some(DayRange(3, 4))
       transitWindowCache.get(TransitWindowKey("CAN", "CHN")) shouldBe Some(DayRange(4, 11))

@@ -1,4 +1,4 @@
-package io.flow.transit.utils
+package io.flow.localization.transit.utils
 
 /**
   * Key used for looking up a transit window in the transit window cache

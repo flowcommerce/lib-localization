@@ -1,11 +1,11 @@
-package io.flow.transit
+package io.flow.localization.transit
 
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatecardTransitWindowsData => TransitWindows}
-import io.flow.transit.utils.{DayRange, TransitWindowKey}
-import io.flow.utils.{Cache, DataClient}
+import io.flow.localization.transit.utils.{DayRange, TransitWindowKey}
+import io.flow.localization.utils.{Cache, DataClient}
 import play.api.libs.json.Json
-import io.flow.utils.DataClientConversions._
+import io.flow.localization.utils.DataClientConversions._
 
 import scala.concurrent.Future
 

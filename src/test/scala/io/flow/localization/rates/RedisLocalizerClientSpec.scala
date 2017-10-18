@@ -1,10 +1,10 @@
-package io.flow.localization
+package io.flow.localization.rates
 
 import java.nio.charset.StandardCharsets.UTF_8
 
 import com.twitter.finagle.redis
 import com.twitter.util.Future
-import io.flow.utils.RedisDataClient
+import io.flow.localization.utils.RedisDataClient
 import org.jboss.netty.buffer.ChannelBuffers
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class RedisLocalizerClientSpec extends WordSpec with MockitoSugar with Matchers with ScalaFutures {
 
-  import io.flow.utils.DataClientConversions._
+  import io.flow.localization.utils.DataClientConversions._
 
   "RedisLocalizerClient" should {
 

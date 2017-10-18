@@ -1,11 +1,11 @@
-package io.flow.transit
+package io.flow.localization.transit
 
-import io.flow.countries.AvailableCountriesProvider
+import io.flow.localization.countries.AvailableCountriesProvider
 import io.flow.published.event.v0.models.json._
 import io.flow.published.event.v0.models.{OrganizationRatecardTransitWindowsData, TransitWindow}
-import io.flow.transit.utils.DayRange
-import io.flow.transit.TransitDataProviderSpec.{Key, transitWindowsData}
-import io.flow.utils.DataClient
+import io.flow.localization.transit.utils.DayRange
+import io.flow.localization.transit.TransitDataProviderSpec.{Key, transitWindowsData}
+import io.flow.localization.utils.DataClient
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when

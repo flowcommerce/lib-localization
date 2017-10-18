@@ -1,4 +1,4 @@
-package io.flow.transit.utils
+package io.flow.localization.transit.utils
 
 /**
   * Represents a range of days

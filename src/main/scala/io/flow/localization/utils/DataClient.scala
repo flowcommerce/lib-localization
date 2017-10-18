@@ -1,4 +1,4 @@
-package io.flow.utils
+package io.flow.localization.utils
 
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject

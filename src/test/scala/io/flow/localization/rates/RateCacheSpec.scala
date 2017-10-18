@@ -1,12 +1,12 @@
-package io.flow.localization
+package io.flow.localization.rates
 
 import io.flow.currency.v0.models.Rate
-import io.flow.localization.RatesCacheImpl._
+import io.flow.localization.rates.RatesCacheImpl._
 import io.flow.published.event.v0.models.OrganizationRatesData
 import io.flow.published.event.v0.models.json._
 import io.flow.reference.data.Currencies
 import io.flow.reference.v0.models.Currency
-import io.flow.utils.DataClient
+import io.flow.localization.utils.DataClient
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any

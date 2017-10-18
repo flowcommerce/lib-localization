@@ -1,10 +1,11 @@
-package io.flow.localization
+package io.flow.localization.rates
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.flow.countries.AvailableCountriesProvider
-import io.flow.localization.FlowSkuPrice._
+import io.flow.localization.countries.AvailableCountriesProvider
+import io.flow.localization.pricing.FlowSkuPrice._
+import io.flow.localization.pricing.FlowSkuPrice
 import io.flow.reference.data.{Countries, Currencies}
-import io.flow.utils.DataClient
+import io.flow.localization.utils.DataClient
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.msgpack.jackson.dataformat.MessagePackFactory
