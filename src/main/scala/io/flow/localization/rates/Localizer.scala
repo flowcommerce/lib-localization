@@ -123,11 +123,7 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
 
   override def getSkuPriceByCountry(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    val key = getKey(country, itemNumber)
-    val defaultCurrency = Countries.mustFind(country).defaultCurrency
-    getPricing(country, itemNumber)
-  }
+  ): Future[Option[FlowSkuPrice]] = getPricing(country, itemNumber)
 
   override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
