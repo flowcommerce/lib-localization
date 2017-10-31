@@ -135,7 +135,7 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
     val futureOptionalPrices = dataClient.mGet[Array[Byte]](itemNumbers.map(getKey(country, _)).toSeq)
 
     futureOptionalPrices.flatMap { optionalPrices =>
-      optionalPrices.map(toFlowSkuPrice) match {
+      optionalPrices.flatMap(toFlowSkuPrice) match {
         case Nil => {
           val futureOptionalPricesUsa = dataClient.mGet[Array[Byte]](itemNumbers.map(getUsaKey).toSeq)
           futureOptionalPricesUsa.map { optionalPrices =>
@@ -144,7 +144,7 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
             optionalFlowSkuPrices.map(convertToFlowSkuPrice(_, targetCurrency)).toList
           }
         }
-        case prices => Future.successful { prices.toList }
+        case prices => Future.successful { prices.map(Option(_)).toList }
       }
     }
   }
