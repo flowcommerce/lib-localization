@@ -6,8 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.twitter.finagle.redis
 import io.flow.localization.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
 import io.flow.localization.pricing.FlowSkuPrice
-import io.flow.reference.Countries
 import io.flow.localization.utils.{DataClient, RedisDataClient}
+import io.flow.reference.Countries
+import io.flow.reference.data.{Countries => CountriesData, Currencies => CurrenciesData}
 import org.msgpack.jackson.dataformat.MessagePackFactory
 
 import scala.concurrent.duration._
@@ -124,33 +125,60 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     val key = CountryKey(country, itemNumber)
-    getPricing(key)
+    val defaultCurrency = Countries.mustFind(country).defaultCurrency
+    getPricing(key, defaultCurrency)
   }
 
   override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
     val keys = itemNumbers.map(CountryKey(country, _))
-    getPricings(keys)
+    val defaultCurrency = Countries.mustFind(country).defaultCurrency
+    getPricings(keys, defaultCurrency)
   }
 
-  private def getPricings(keyProviders: Iterable[KeyProvider])(
+  private def getPricings(keyProviders: Iterable[KeyProvider], targetCurrency: Option[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    dataClient.mGet[Array[Byte]](keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
-      optionalPrices.map(toFlowSkuPrice).toList
+    val futureOptionalPrices = dataClient.mGet[Array[Byte]](keyProviders.map(_.getKey).toSeq)
+
+    futureOptionalPrices.flatMap { optionalPrices =>
+      optionalPrices.map(toFlowSkuPrice) match {
+        case Nil => {
+          val futureOptionalPricesUsa = dataClient.mGet[Array[Byte]](keyProviders.map(_.getUsaKey).toSeq)
+          futureOptionalPricesUsa.map { optionalPrices =>
+            val optionalFlowSkuPrices = optionalPrices.map(toFlowSkuPrice)
+            optionalFlowSkuPrices.map(convertToFlowSkuPrice(_, targetCurrency)).toList
+          }
+        }
+        case prices => Future.successful { prices.toList }
+      }
     }
   }
 
-  private def getPricing(keyProvider: KeyProvider)(
+  private def getPricing(keyProvider: KeyProvider, targetCurrency: Option[String])(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    dataClient.get[Array[Byte]](keyProvider.getKey).map(toFlowSkuPrice)
+    dataClient.get[Array[Byte]](keyProvider.getKey).flatMap {
+      case optionalPrice@Some(_) => Future.successful { toFlowSkuPrice(optionalPrice) }
+      case None => {
+        val futureOptionalPriceUsa = dataClient.get[Array[Byte]](keyProvider.getUsaKey)
+        val optionalFlowSkuPrice = futureOptionalPriceUsa.map(toFlowSkuPrice)
+        optionalFlowSkuPrice.map(convertToFlowSkuPrice(_, targetCurrency))
+      }
+    }
   }
 
   private def toFlowSkuPrice(optionalPrice: Option[Array[Byte]]): Option[FlowSkuPrice] = {
     optionalPrice.flatMap { bytes =>
       FlowSkuPrice(mapper.readValue(bytes, classOf[java.util.Map[String, Any]]))
+    }
+  }
+
+  private def convertToFlowSkuPrice(flowSkuPrice: Option[FlowSkuPrice], targetCurrency: Option[String]): Option[FlowSkuPrice] = {
+    flowSkuPrice match {
+      case Some(price) => targetCurrency.map { convert(price, _) }
+      case None => None
     }
   }
 
@@ -189,6 +217,7 @@ object LocalizerImpl {
 
 private[this] sealed trait KeyProvider {
   def getKey: String
+  def getUsaKey: String
 }
 
 private[this] case class CountryKey(country: String, itemNumber: String) extends KeyProvider {
@@ -196,4 +225,6 @@ private[this] case class CountryKey(country: String, itemNumber: String) extends
     val code = Countries.find(country).map(_.iso31663).getOrElse(country)
     s"c-$code:$itemNumber"
   }
+
+  def getUsaKey: String = s"c-${CountriesData.Usa.iso31663}:$itemNumber"
 }

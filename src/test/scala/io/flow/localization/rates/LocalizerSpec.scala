@@ -195,6 +195,37 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       localizer.isEnabled("CAN") shouldBe false
     }
 
+    "retrieve a localized pricing with default country" in {
+      val dataClient = mock[DataClient]
+
+      val country = Countries.Can.iso31663
+      val defaultCountry = Countries.Usa.iso31663
+      val itemNumber = "item123"
+
+      val key = s"c-$country:$itemNumber"
+      val defaultKey = s"c-$defaultCountry:$itemNumber"
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
+
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(None))
+      when(dataClient.get[Array[Byte]](defaultKey)).thenReturn(Future.successful(Some(value)))
+
+      val localizer = new LocalizerImpl(dataClient, mock[RateProvider], mock[AvailableCountriesProvider])
+
+      val expected = FlowSkuPrice(pricing50Cad).get
+
+      // Verify we can retrieve by iso31663 code
+      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
+      }
+
+      // Verify we can retrieve by iso31662 code lowercase
+      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
+        res shouldBe Some(expected)
+        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
+      }
+    }
+
   }
 
 }
