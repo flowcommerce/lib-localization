@@ -100,33 +100,6 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       }
     }
 
-    "retrieve a localized pricing by experience" in {
-      val dataClient = mock[DataClient]
-
-      val experienceKey = "canada-2"
-      val itemNumber = "item123"
-
-      val key = s"experience-$experienceKey:$itemNumber"
-      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
-
-      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
-
-      val localizer = new LocalizerImpl(dataClient, mock[RateProvider], mock[AvailableCountriesProvider])
-
-      val expected = FlowSkuPrice(pricing50Cad).get
-
-      whenReady(localizer.getSkuPriceByExperience(experienceKey, itemNumber = itemNumber)) { res =>
-        res shouldBe Some(expected)
-        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
-      }
-
-      // Verify case insensitive
-      whenReady(localizer.getSkuPriceByExperience(experienceKey.toUpperCase, itemNumber = itemNumber)) {res =>
-        res shouldBe Some(expected)
-        res.get.msrpPrice.get shouldBe expected.msrpPrice.get
-      }
-    }
-
     "retrieve and convert a localized pricing by country" in {
       val dataClient = mock[DataClient]
       val rateProvider = mock[RateProvider]
@@ -179,26 +152,6 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
         res should have size 2
         res(0) shouldBe FlowSkuPrice(pricing25Eur)
         res(1) shouldBe FlowSkuPrice(pricing25Eur)
-      }
-    }
-
-    "retrieve and convert a localized pricing by experience" in {
-      val dataClient = mock[DataClient]
-      val rateProvider = mock[RateProvider]
-
-      val experienceKey = "canada-2"
-      val itemNumber = "item123"
-
-      val key = s"experience-$experienceKey:$itemNumber"
-      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Cad)
-
-      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(Some(value)))
-      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
-
-      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
-
-      whenReady(localizer.getSkuPriceByExperienceWithCurrency(experienceKey, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)) {
-        _ shouldBe FlowSkuPrice(pricing25Eur)
       }
     }
 

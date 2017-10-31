@@ -77,58 +77,6 @@ trait Localizer {
   def convert(pricing: FlowSkuPrice, targetCurrency: String): FlowSkuPrice
 
   /**
-    * Returns the localized pricing of the specified items for the specified experience
-    *
-    * @param experienceKey the id of the experience
-    * @param itemNumbers the item numbers to localize
-    * @return the localized pricing of the specified items for the specified experience
-    */
-  def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
-    implicit executionContext: ExecutionContext
-  ): Future[List[Option[FlowSkuPrice]]]
-
-  /**
-    * Returns the localized pricing of the specified item for the specified experience
-    *
-    * @param experienceKey the id of the experience
-    * @param itemNumber the item number to localize
-    * @return the localized pricing of the specified item for the specified experience
-    */
-  def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]]
-
-  /**
-    * Returns the localized pricing of the specified item for the specified experience,
-    * then converting as necessary to the specified target currency.
-    *
-    * @param experienceKey the id of the experience
-    * @param itemNumber the id of the item
-    * @param targetCurrency the ISO currency code
-    * @return the localized pricing of the specified item for the specified experience in the specified currency
-    */
-  def getSkuPriceByExperienceWithCurrency(experienceKey: String, itemNumber: String, targetCurrency: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    getSkuPriceByExperience(experienceKey, itemNumber).map(_.map(convert(_, targetCurrency)))
-  }
-
-  /**
-    * Returns the localized pricing of the specified items for the specified experience,
-    * then converting as necessary to the specified target currency.
-    *
-    * @param experienceKey the id of the experience
-    * @param itemNumbers the id of the items
-    * @param targetCurrency the ISO currency code
-    * @return the localized pricing of the specified items for the specified experience in the specified currency
-    */
-  def getSkuPricesByExperienceWithCurrency(experienceKey: String, itemNumbers: Iterable[String], targetCurrency: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[List[Option[FlowSkuPrice]]] = {
-    getSkuPricesByExperience(experienceKey, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
-  }
-
-  /**
     * Returns true if the specified country is enabled, false otherwise
     * @param country country in the ISO 3166-3 format
     * @return true if the specified country is enabled, false otherwise
@@ -179,25 +127,10 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
     getPricing(key)
   }
 
-  override def getSkuPriceByExperience(experienceKey: String, itemNumber: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    val key = ExperienceKey(experienceKey, itemNumber)
-    getPricing(key)
-  }
-
-
   override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
     val keys = itemNumbers.map(CountryKey(country, _))
-    getPricings(keys)
-  }
-
-  override def getSkuPricesByExperience(experienceKey: String, itemNumbers: Iterable[String])(
-    implicit executionContext: ExecutionContext
-  ): Future[List[Option[FlowSkuPrice]]] = {
-    val keys = itemNumbers.map(ExperienceKey(experienceKey, _))
     getPricings(keys)
   }
 
@@ -263,8 +196,4 @@ private[this] case class CountryKey(country: String, itemNumber: String) extends
     val code = Countries.find(country).map(_.iso31663).getOrElse(country)
     s"c-$code:$itemNumber"
   }
-}
-
-private[this] case class ExperienceKey(experience: String, itemNumber: String) extends KeyProvider {
-  def getKey: String = s"experience-${experience.toLowerCase}:$itemNumber"
 }
