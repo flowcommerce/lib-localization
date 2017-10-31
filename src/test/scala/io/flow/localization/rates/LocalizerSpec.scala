@@ -20,21 +20,27 @@ import scala.concurrent.Future
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaFutures {
 
   private val pricing50Cad = Map(
-    CurrencyKey -> "CAD",
+    CurrencyKey -> Currencies.Cad.iso42173,
     SalePriceKey -> 50.0,
     MsrpPriceKey -> 100.0
   ).asJava
 
   private val pricing25Eur = Map(
-    CurrencyKey -> "EUR",
+    CurrencyKey -> Currencies.Eur.iso42173,
     SalePriceKey -> 25.0,
     MsrpPriceKey -> 50.0
   ).asJava
 
   private val pricing5Eur = Map(
-    CurrencyKey -> "EUR",
+    CurrencyKey -> Currencies.Eur.iso42173,
     SalePriceKey -> 5.0,
     MsrpPriceKey -> 10.0
+  ).asJava
+
+  private val pricing50Usa = Map(
+    CurrencyKey -> Currencies.Usd.iso42173,
+    SalePriceKey -> 50.0,
+    MsrpPriceKey -> 100.0
   ).asJava
 
   // { "i": "Includes VAT and duty", "c": "PHP", "b": 9100, "m": 22000, "t": 1507581191, "a": 16400 }
@@ -44,7 +50,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
 
   private val deserializedPricing = Map[String, Any](
     "i" -> "Includes VAT and duty",
-    "c" -> "PHP",
+    "c" -> Currencies.Php.iso42173,
     "b" -> 9100,
     "m" -> 22000,
     "t" -> 1507581191,
@@ -186,13 +192,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val dataClient = mock[DataClient]
 
       val availableCountriesProvider = mock[AvailableCountriesProvider]
-      when(availableCountriesProvider.isEnabled("FRA")).thenReturn(true)
-      when(availableCountriesProvider.isEnabled("CAN")).thenReturn(false)
+      when(availableCountriesProvider.isEnabled(Countries.Fra.iso31663)).thenReturn(true)
+      when(availableCountriesProvider.isEnabled(Countries.Can.iso31663)).thenReturn(false)
 
       val localizer = new LocalizerImpl(dataClient, mock[RateProvider], availableCountriesProvider)
 
-      localizer.isEnabled("FRA") shouldBe true
-      localizer.isEnabled("CAN") shouldBe false
+      localizer.isEnabled(Countries.Fra.iso31663) shouldBe true
+      localizer.isEnabled(Countries.Can.iso31663) shouldBe false
     }
 
     "retrieve a localized pricing with default country" in {
@@ -223,6 +229,39 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
         res shouldBe Some(expected)
         res.get.msrpPrice.get shouldBe expected.msrpPrice.get
+      }
+    }
+
+    "retrieve and convert a localized price by default country" in {
+      val dataClient = mock[DataClient]
+      val rateProvider = mock[RateProvider]
+
+      val country = Countries.Fra.iso31663
+      val defaultCountry = Countries.Usa.iso31663
+      val itemNumber = "item123"
+
+      val key = s"c-$country:$itemNumber"
+      val defaultKey = s"c-$defaultCountry:$itemNumber"
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Usa)
+
+      when(dataClient.get[Array[Byte]](key)).thenReturn(Future.successful(None))
+      when(dataClient.get[Array[Byte]](defaultKey)).thenReturn(Future.successful(Some(value)))
+      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
+
+      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
+
+      // Verify we can retrieve by iso31663 code
+      whenReady(localizer.getSkuPriceByCountryWithCurrency(
+        Countries.Fra.iso31663, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
+      ) {
+        _ shouldBe FlowSkuPrice(pricing25Eur)
+      }
+
+      // Verify we can retrieve by iso31662 code lowercase
+      whenReady(localizer.getSkuPriceByCountryWithCurrency(
+        Countries.Fra.iso31662.toLowerCase, itemNumber = itemNumber, targetCurrency = Currencies.Eur.iso42173)
+      ) {
+        _ shouldBe FlowSkuPrice(pricing25Eur)
       }
     }
 
