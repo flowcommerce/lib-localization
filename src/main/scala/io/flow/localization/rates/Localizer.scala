@@ -8,7 +8,7 @@ import io.flow.localization.countries.{AvailableCountriesProvider, AvailableCoun
 import io.flow.localization.pricing.FlowSkuPrice
 import io.flow.localization.utils.{DataClient, RedisDataClient}
 import io.flow.reference.Countries
-import io.flow.reference.data.{Countries => CountriesData, Currencies => CurrenciesData}
+import io.flow.reference.data.{Countries => CountriesData}
 import org.msgpack.jackson.dataformat.MessagePackFactory
 
 import scala.concurrent.duration._
