@@ -43,6 +43,12 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
     MsrpPriceKey -> 100.0
   ).asJava
 
+  private val pricing10Usa = Map(
+    CurrencyKey -> Currencies.Usd.iso42173,
+    SalePriceKey -> 10.0,
+    MsrpPriceKey -> 20.0
+  ).asJava
+
   // { "i": "Includes VAT and duty", "c": "PHP", "b": 9100, "m": 22000, "t": 1507581191, "a": 16400 }
   private val serializedPricing = Array(134, 161, 105, 181, 73, 110, 99, 108, 117, 100, 101, 115, 32, 86, 65, 84, 32,
     97, 110, 100, 32, 100, 117, 116, 121, 161, 99, 163, 80, 72, 80, 161, 98, 205, 35, 140, 161, 109, 205, 85, 240, 161,
@@ -320,6 +326,20 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
         targetCurrency = Currencies.Eur.iso42173)) { res =>
         res should have size 2
         res(0) shouldBe FlowSkuPrice(pricing25Eur)
+        res(1) shouldBe FlowSkuPrice(pricing25Eur)
+      }
+
+      // ensure item order is maintained
+      val defaultValue2: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing10Usa)
+
+      when(dataClient.mGet[Array[Byte]](Seq(key1, key2))).thenReturn(Future.successful(Seq(None, Some(value))))
+      when(dataClient.mGet[Array[Byte]](Seq(defaultKey1))).thenReturn(Future.successful(Seq(Some(defaultValue2))))
+      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
+
+      whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
+        targetCurrency = Currencies.Eur.iso42173)) { res =>
+        res should have size 2
+        res(0) shouldBe FlowSkuPrice(pricing5Eur)
         res(1) shouldBe FlowSkuPrice(pricing25Eur)
       }
     }
