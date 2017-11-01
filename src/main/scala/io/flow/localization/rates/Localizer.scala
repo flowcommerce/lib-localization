@@ -156,8 +156,11 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
       case None => {
         val futureOptionalPriceUsa = dataClient.get[Array[Byte]](getUsaKey(itemNumber))
         val optionalFlowSkuPrice = futureOptionalPriceUsa.map(toFlowSkuPrice)
-        val targetCurrency = Countries.mustFind(country).defaultCurrency
-        optionalFlowSkuPrice.map(convertToFlowSkuPrice(_, targetCurrency))
+
+        Countries.find(country).map { foundCountry =>
+          val currency = foundCountry.defaultCurrency
+          optionalFlowSkuPrice.map(convertToFlowSkuPrice(_, currency))
+        }.getOrElse(Future.successful { None })
       }
     }
   }
