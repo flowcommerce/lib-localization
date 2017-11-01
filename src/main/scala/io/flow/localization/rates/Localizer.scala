@@ -6,8 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.twitter.finagle.redis
 import io.flow.localization.countries.{AvailableCountriesProvider, AvailableCountriesProviderCacheImpl}
 import io.flow.localization.pricing.FlowSkuPrice
-import io.flow.reference.Countries
 import io.flow.localization.utils.{DataClient, RedisDataClient}
+import io.flow.reference.Countries
+import io.flow.reference.data.{Countries => CountriesData}
 import org.msgpack.jackson.dataformat.MessagePackFactory
 
 import scala.concurrent.duration._
@@ -23,7 +24,7 @@ trait Localizer {
     * @param itemNumbers the item numbers to localize
     * @return the localized pricing of the specified items for the specified country
     */
-  def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
+  def getPricings(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]]
 
@@ -35,7 +36,7 @@ trait Localizer {
     * @param itemNumber the item number to localize
     * @return the localized pricing of the specified item for the specified country
     */
-  def getSkuPriceByCountry(country: String, itemNumber: String)(
+  def getPricing(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]]
 
@@ -51,7 +52,7 @@ trait Localizer {
   def getSkuPriceByCountryWithCurrency(country: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    getSkuPriceByCountry(country, itemNumber).map(_.map(convert(_, targetCurrency)))
+    getPricing(country, itemNumber).map(_.map(convert(_, targetCurrency)))
   }
 
   /**
@@ -66,7 +67,7 @@ trait Localizer {
   def getSkuPricesByCountryWithCurrency(country: String, itemNumbers: Iterable[String], targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    getSkuPricesByCountry(country, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
+    getPricings(country, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
   }
 
   /**
@@ -120,37 +121,60 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
 
   private val mapper = new ObjectMapper(new MessagePackFactory())
 
-  override def getSkuPriceByCountry(country: String, itemNumber: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = {
-    val key = CountryKey(country, itemNumber)
-    getPricing(key)
-  }
-
-  override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
+  override def getPricings(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    val keys = itemNumbers.map(CountryKey(country, _))
-    getPricings(keys)
-  }
+    val futureOptionalPrices = dataClient.mGet[Array[Byte]](itemNumbers.map(getKey(country, _)).toSeq)
 
-  private def getPricings(keyProviders: Iterable[KeyProvider])(
-    implicit executionContext: ExecutionContext
-  ): Future[List[Option[FlowSkuPrice]]] = {
-    dataClient.mGet[Array[Byte]](keyProviders.map(_.getKey).toSeq).map { optionalPrices =>
-      optionalPrices.map(toFlowSkuPrice).toList
+    futureOptionalPrices.flatMap { optionalPrices =>
+      val (found, notFound) =
+        (optionalPrices.indices, itemNumbers, optionalPrices).zipped
+          .partition { case (_, _, optionalPrice) => optionalPrice.isDefined}
+
+      if (notFound.nonEmpty) {
+        val foundPrices = found.map { case (index, _, optionalPrice) => (index, toFlowSkuPrice(optionalPrice)) }.toList
+
+        val (notFoundIndices, notFoundNumbers, _) = notFound.unzip3
+        val notFoundIndicesSeq = notFoundIndices.toList
+        Countries.find(country).map { foundCountry =>
+          val currency = foundCountry.defaultCurrency
+          dataClient.mGet[Array[Byte]](notFoundNumbers.map(getUsaKey).toSeq).map { optionalPrices =>
+            val flowSkuPrices = optionalPrices.map(toFlowSkuPrice).map(convertToFlowSkuPrice(_, currency))
+            notFoundIndicesSeq.zip(flowSkuPrices)
+          }
+        }.getOrElse(Future.successful(notFoundIndicesSeq.map(_ -> None)))
+          .map(n => (n ++ foundPrices).sortBy { case (index, _) => index }.map { case (_, p) => p })
+      } else Future.successful(found.map { case (_, _, optionalPrice) => toFlowSkuPrice(optionalPrice) }.toList)
     }
   }
 
-  private def getPricing(keyProvider: KeyProvider)(
+  override def getPricing(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    dataClient.get[Array[Byte]](keyProvider.getKey).map(toFlowSkuPrice)
+    dataClient.get[Array[Byte]](getKey(country, itemNumber)).flatMap {
+      case optionalPrice@Some(_) => Future.successful { toFlowSkuPrice(optionalPrice) }
+      case None => {
+        val futureOptionalPriceUsa = dataClient.get[Array[Byte]](getUsaKey(itemNumber))
+        val optionalFlowSkuPrice = futureOptionalPriceUsa.map(toFlowSkuPrice)
+
+        Countries.find(country).map { foundCountry =>
+          val currency = foundCountry.defaultCurrency
+          optionalFlowSkuPrice.map(convertToFlowSkuPrice(_, currency))
+        }.getOrElse(Future.successful { None })
+      }
+    }
   }
 
   private def toFlowSkuPrice(optionalPrice: Option[Array[Byte]]): Option[FlowSkuPrice] = {
     optionalPrice.flatMap { bytes =>
       FlowSkuPrice(mapper.readValue(bytes, classOf[java.util.Map[String, Any]]))
+    }
+  }
+
+  private def convertToFlowSkuPrice(flowSkuPrice: Option[FlowSkuPrice], targetCurrency: Option[String]): Option[FlowSkuPrice] = {
+    flowSkuPrice match {
+      case Some(price) => targetCurrency.map { convert(price, _) }
+      case None => None
     }
   }
 
@@ -185,15 +209,10 @@ object LocalizerImpl {
 
   private def convertPrice(amount: BigDecimal, rate: BigDecimal): BigDecimal = amount * rate
 
-}
-
-private[this] sealed trait KeyProvider {
-  def getKey: String
-}
-
-private[this] case class CountryKey(country: String, itemNumber: String) extends KeyProvider {
-  def getKey: String = {
+  private def getKey(country: String, itemNumber: String): String = {
     val code = Countries.find(country).map(_.iso31663).getOrElse(country)
     s"c-$code:$itemNumber"
   }
+
+  private def getUsaKey(itemNumber: String): String = s"c-${CountriesData.Usa.iso31663}:$itemNumber"
 }
