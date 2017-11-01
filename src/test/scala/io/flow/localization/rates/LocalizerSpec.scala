@@ -75,13 +75,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val expected = FlowSkuPrice(pricing50Cad).get
 
       // Verify we can retrieve by iso31663 code
-      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
+      whenReady(localizer.getPricing(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
         res shouldBe Some(expected)
         res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }
 
       // Verify we can retrieve by iso31662 code lowercase
-      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
+      whenReady(localizer.getPricing(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
         res shouldBe Some(expected)
         res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }
@@ -100,7 +100,7 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
 
       val expected = FlowSkuPrice(deserializedPricing).get
 
-      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
+      whenReady(localizer.getPricing(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
         res shouldBe Some(expected)
         res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }
@@ -220,13 +220,13 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       val expected = FlowSkuPrice(pricing50Cad).get
 
       // Verify we can retrieve by iso31663 code
-      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
+      whenReady(localizer.getPricing(Countries.Can.iso31663, itemNumber = itemNumber)) { res =>
         res shouldBe Some(expected)
         res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }
 
       // Verify we can retrieve by iso31662 code lowercase
-      whenReady(localizer.getSkuPriceByCountry(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
+      whenReady(localizer.getPricing(Countries.Can.iso31662.toLowerCase, itemNumber = itemNumber)) { res =>
         res shouldBe Some(expected)
         res.get.msrpPrice.get shouldBe expected.msrpPrice.get
       }

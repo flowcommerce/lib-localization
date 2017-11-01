@@ -24,7 +24,7 @@ trait Localizer {
     * @param itemNumbers the item numbers to localize
     * @return the localized pricing of the specified items for the specified country
     */
-  def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
+  def getPricings(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]]
 
@@ -36,7 +36,7 @@ trait Localizer {
     * @param itemNumber the item number to localize
     * @return the localized pricing of the specified item for the specified country
     */
-  def getSkuPriceByCountry(country: String, itemNumber: String)(
+  def getPricing(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]]
 
@@ -52,7 +52,7 @@ trait Localizer {
   def getSkuPriceByCountryWithCurrency(country: String, itemNumber: String, targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
-    getSkuPriceByCountry(country, itemNumber).map(_.map(convert(_, targetCurrency)))
+    getPricing(country, itemNumber).map(_.map(convert(_, targetCurrency)))
   }
 
   /**
@@ -67,7 +67,7 @@ trait Localizer {
   def getSkuPricesByCountryWithCurrency(country: String, itemNumbers: Iterable[String], targetCurrency: String)(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
-    getSkuPricesByCountry(country, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
+    getPricings(country, itemNumbers).map(_.map(_.map(convert(_, targetCurrency))))
   }
 
   /**
@@ -121,15 +121,7 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
 
   private val mapper = new ObjectMapper(new MessagePackFactory())
 
-  override def getSkuPriceByCountry(country: String, itemNumber: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Option[FlowSkuPrice]] = getPricing(country, itemNumber)
-
-  override def getSkuPricesByCountry(country: String, itemNumbers: Iterable[String])(
-    implicit executionContext: ExecutionContext
-  ): Future[List[Option[FlowSkuPrice]]] = getPricings(country, itemNumbers)
-
-  private def getPricings(country: String, itemNumbers: Iterable[String])(
+  override def getPricings(country: String, itemNumbers: Iterable[String])(
     implicit executionContext: ExecutionContext
   ): Future[List[Option[FlowSkuPrice]]] = {
     val futureOptionalPrices = dataClient.mGet[Array[Byte]](itemNumbers.map(getKey(country, _)).toSeq)
@@ -149,7 +141,7 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
     }
   }
 
-  private def getPricing(country: String, itemNumber: String)(
+  override def getPricing(country: String, itemNumber: String)(
     implicit executionContext: ExecutionContext
   ): Future[Option[FlowSkuPrice]] = {
     dataClient.get[Array[Byte]](getKey(country, itemNumber)).flatMap {
