@@ -294,6 +294,36 @@ class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaF
       }
     }
 
+    "retrieve and convert localized pricings by country and default country" in {
+      val dataClient = mock[DataClient]
+      val rateProvider = mock[RateProvider]
+
+      val country = Countries.Fra.iso31663
+      val defaultCountry = Countries.Usa.iso31663
+      val itemNumber1 = "item1"
+      val itemNumber2 = "item2"
+
+      val key1 = s"c-$country:$itemNumber1"
+      val key2 = s"c-$country:$itemNumber2"
+      val defaultKey1 = s"c-$defaultCountry:$itemNumber1"
+      val defaultKey2 = s"c-$defaultCountry:$itemNumber2"
+      val value: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing25Eur)
+      val defaultValue: Array[Byte] = new ObjectMapper(new MessagePackFactory()).writeValueAsBytes(pricing50Usa)
+
+      when(dataClient.mGet[Array[Byte]](Seq(key1, key2))).thenReturn(Future.successful(Seq(Some(value), None)))
+      when(dataClient.mGet[Array[Byte]](Seq(defaultKey2))).thenReturn(Future.successful(Seq(Some(defaultValue))))
+      when(rateProvider.get(any(), any())).thenReturn(Some(BigDecimal(0.5)))
+
+      val localizer = new LocalizerImpl(dataClient, rateProvider, mock[AvailableCountriesProvider])
+
+      whenReady(localizer.getSkuPricesByCountryWithCurrency(country, itemNumbers = Seq(itemNumber1, itemNumber2),
+        targetCurrency = Currencies.Eur.iso42173)) { res =>
+        res should have size 2
+        res(0) shouldBe FlowSkuPrice(pricing25Eur)
+        res(1) shouldBe FlowSkuPrice(pricing25Eur)
+      }
+    }
+
   }
 
 }
