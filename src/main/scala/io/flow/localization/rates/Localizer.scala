@@ -127,26 +127,24 @@ class LocalizerImpl @Inject() (dataClient: DataClient, rateProvider: RateProvide
     val futureOptionalPrices = dataClient.mGet[Array[Byte]](itemNumbers.map(getKey(country, _)).toSeq)
 
     futureOptionalPrices.flatMap { optionalPrices =>
-      val optionalPricesWithIndex = optionalPrices.zipWithIndex
-      val (found, notFound) = optionalPricesWithIndex.partition(_._1.isDefined)
+      val (found, notFound) =
+        (optionalPrices.indices, itemNumbers, optionalPrices).zipped
+          .partition { case (_, _, optionalPrice) => optionalPrice.isDefined}
 
-      val flowSkuPrices = found.flatMap(p => toFlowSkuPrice(p._1)).map(Option(_)).toList
+      if (notFound.nonEmpty) {
+        val foundPrices = found.map { case (index, _, optionalPrice) => (index, toFlowSkuPrice(optionalPrice)) }.toList
 
-      val defaultConvertedFlowSkuPrices = notFound.collect { case (_, index) =>  itemNumbers.toSeq(index) } match {
-        case Nil => Future.successful { Nil }
-        case items => {
-          val futureOptionalPricesUsa = dataClient.mGet[Array[Byte]](items.map(getUsaKey))
-          futureOptionalPricesUsa.map { optionalPrices =>
-            val optionalFlowSkuPrices = optionalPrices.map(toFlowSkuPrice)
-            val targetCurrency = Countries.mustFind(country).defaultCurrency
-            optionalFlowSkuPrices.map(convertToFlowSkuPrice(_, targetCurrency)).toList
+        val (notFoundIndices, notFoundNumbers, _) = notFound.unzip3
+        val notFoundIndicesSeq = notFoundIndices.toList
+        Countries.find(country).map { foundCountry =>
+          val currency = foundCountry.defaultCurrency
+          dataClient.mGet[Array[Byte]](notFoundNumbers.map(getUsaKey).toSeq).map { optionalPrices =>
+            val flowSkuPrices = optionalPrices.map(toFlowSkuPrice).map(convertToFlowSkuPrice(_, currency))
+            notFoundIndicesSeq.zip(flowSkuPrices)
           }
-        }
-      }
-
-      defaultConvertedFlowSkuPrices.map { convertedPrices =>
-        convertedPrices ++ flowSkuPrices
-      }
+        }.getOrElse(Future.successful(notFoundIndicesSeq.map(_ -> None)))
+          .map(n => (n ++ foundPrices).sortBy { case (index, _) => index }.map { case (_, p) => p })
+      } else Future.successful(found.map { case (_, _, optionalPrice) => toFlowSkuPrice(optionalPrice) }.toList)
     }
   }
 
