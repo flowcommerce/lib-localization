@@ -12,7 +12,7 @@ import scala.concurrent.Future
 private[transit] class TransitWindowsCacheImpl(dataClient: DataClient, override val refreshPeriodMs: Long)
   extends Cache[TransitWindows, TransitWindowKey, DayRange] {
 
-  private val Key: String = "transit_window"
+  private val Key: String = "transit_windows"
 
   override def retrieveData(): Future[Option[TransitWindows]] = {
     dataClient.get[String](Key).map { optionalJson =>
