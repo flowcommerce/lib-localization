@@ -68,7 +68,7 @@ class TransitWindowsCacheSpec extends FlatSpec with MockitoSugar with Matchers w
 
 object TransitWindowsCacheSpec {
 
-  private val Key: String = "transit_windows"
+  private val Key: String = "transit_window"
   private val emptyTransitWindowData: OrganizationRatecardTransitWindowsData = OrganizationRatecardTransitWindowsData(Seq.empty[TransitWindow])
   private val initialTransitWindowsData: OrganizationRatecardTransitWindowsData = OrganizationRatecardTransitWindowsData(
     Seq(
