@@ -52,7 +52,7 @@ class TransitDataProviderSpec extends FlatSpec with MockitoSugar with Matchers w
 
 object TransitDataProviderSpec {
 
-  private val Key: String = "transit_window"
+  private val Key: String = "transit_windows"
   private val transitWindowsData: OrganizationRatecardTransitWindowsData = OrganizationRatecardTransitWindowsData(
     Seq(
       TransitWindow("USD", "CAN", 3, 5),
