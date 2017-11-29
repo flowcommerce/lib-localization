@@ -1,8 +1,8 @@
 lazy val commonSettings = Seq(
   name := "lib-localization",
   organization := "io.flow",
-  scalaVersion in ThisBuild := "2.11.11",
-  crossScalaVersions := Seq("2.11.11", "2.10.6"),
+  scalaVersion in ThisBuild := "2.11.12",
+  crossScalaVersions := Seq("2.11.12", "2.10.6"),
   resolvers ++= Seq(
     "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
