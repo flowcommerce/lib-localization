@@ -26,6 +26,7 @@ lazy val commonSettings = Seq(
   },
 
   libraryDependencies ++=
+    version := "0.0.40",
     Seq(
       "com.gilt" %% "gfc-cache" % "0.0.3",
       "io.flow" %% "lib-reference-scala" % "0.1.30",
@@ -35,8 +36,7 @@ lazy val commonSettings = Seq(
       "org.msgpack" % "jackson-dataformat-msgpack" % "0.7.1",
       "org.mockito" % "mockito-core" % "2.8.47" % "test",
       "org.scalatest" %% "scalatest" % "3.0.3" % "test"
-    ),
-version := "0.0.40"
+    )
 )
 
 def generateProject(projectName: String, playVersion: String) = {
