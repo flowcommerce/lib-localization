@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
   },
 
   libraryDependencies ++=
-    version := "0.0.52",
+    version := "0.0.53",
     Seq(
       "com.gilt" %% "gfc-cache" % "0.0.3",
       "io.flow" %% "lib-reference-scala" % "0.1.30",
