@@ -10,7 +10,7 @@ lazy val commonSettings = Seq(
   ),
   
   credentials += Credentials(
-    "Artifactory Realm",
+    "Flow Artifactory Realm",
     "flow.artifactoryonline.com",
     System.getenv("ARTIFACTORY_USERNAME"),
     System.getenv("ARTIFACTORY_PASSWORD")
