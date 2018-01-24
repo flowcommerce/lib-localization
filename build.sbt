@@ -1,8 +1,8 @@
 lazy val commonSettings = Seq(
-  name := "lib-localization",
+  name := "lib-localization-play26",
   organization := "io.flow",
-  scalaVersion in ThisBuild := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.10.6"),
+  scalaVersion in ThisBuild := "2.12.4",
+  crossScalaVersions := Seq("2.12.4", "2.11.12", "2.10.6"),
   resolvers ++= Seq(
     "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
@@ -28,9 +28,9 @@ lazy val commonSettings = Seq(
   libraryDependencies ++=
     Seq(
       "com.gilt" %% "gfc-cache" % "0.0.3",
-      "io.flow" %% "lib-reference-scala" % "0.1.30",
+      "io.flow" %% "lib-reference-scala" % "0.1.48",
       "javax.inject" % "javax.inject" % "1",
-      "com.twitter" %% "finagle-redis" % "6.30.0",
+      "com.twitter" %% "finagle-redis" % "18.1.0",
       "org.msgpack" % "msgpack-core" % "0.7.1",
       "org.msgpack" % "jackson-dataformat-msgpack" % "0.7.1",
       "org.mockito" % "mockito-core" % "2.8.47" % "test",
@@ -54,5 +54,5 @@ lazy val libLocalizationPlay23 = generateProject("lib-localization-play2_3", "2.
 lazy val root =
   (project in file("."))
     .settings(commonSettings)
-    .settings(libraryDependencies += "com.typesafe.play" %% "play-json" % "2.4.11")
+    .settings(libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.8")
     .aggregate(libLocalizationPlay23)
