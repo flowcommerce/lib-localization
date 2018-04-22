@@ -15,7 +15,7 @@ package io.flow.currency.v0.models {
    * @param margin A percent of the base currency value added to the base currency before
    *        conversion.
    */
-  case class OrganizationCurrencySetting(
+  final case class OrganizationCurrencySetting(
     id: String,
     base: String,
     target: String,
@@ -32,13 +32,13 @@ package io.flow.currency.v0.models {
    * @param margin A percent of the base currency value added to the base currency before
    *        conversion.
    */
-  case class OrganizationCurrencySettingForm(
+  final case class OrganizationCurrencySettingForm(
     base: String,
     target: String,
     margin: BigDecimal
   )
 
-  case class OrganizationCurrencySettingVersion(
+  final case class OrganizationCurrencySettingVersion(
     id: String,
     timestamp: _root_.org.joda.time.DateTime,
     `type`: io.flow.common.v0.models.ChangeType,
@@ -56,7 +56,7 @@ package io.flow.currency.v0.models {
    * @param value The actual conversion rate from the base currency to target currency including
    *        any applicable margins.
    */
-  case class Rate(
+  final case class Rate(
     id: String,
     base: String,
     target: String,
@@ -73,13 +73,13 @@ package io.flow.currency.v0.models {
    *        https://api.flow.io/reference/currencies
    * @param effectiveAt The time at which this rate is effective.
    */
-  case class RateForm(
+  final case class RateForm(
     base: String,
     target: String,
     effectiveAt: _root_.org.joda.time.DateTime
   )
 
-  case class RateVersion(
+  final case class RateVersion(
     id: String,
     timestamp: _root_.org.joda.time.DateTime,
     `type`: io.flow.common.v0.models.ChangeType,
