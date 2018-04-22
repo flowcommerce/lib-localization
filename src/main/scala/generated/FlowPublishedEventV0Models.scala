@@ -18,7 +18,7 @@ package io.flow.published.event.v0.models {
     case object OrganizationCountriesPublished extends PublishedEventDiscriminator { override def toString = "organization_countries_published" }
     case object OrganizationRatecardTransitWindowsPublished extends PublishedEventDiscriminator { override def toString = "organization_ratecard_transit_windows_published" }
 
-    case class UNDEFINED(override val toString: String) extends PublishedEventDiscriminator
+    final case class UNDEFINED(override val toString: String) extends PublishedEventDiscriminator
 
     val all: scala.List[PublishedEventDiscriminator] = scala.List(OrganizationRatesPublished, OrganizationCountriesPublished, OrganizationRatecardTransitWindowsPublished)
 
@@ -34,7 +34,7 @@ package io.flow.published.event.v0.models {
    * @param available List of ISO 3166-3 country codes available as defined in
    *        https://api.flow.io/reference/countries
    */
-  case class OrganizationCountriesData(
+  final case class OrganizationCountriesData(
     available: Seq[String]
   )
 
@@ -44,14 +44,14 @@ package io.flow.published.event.v0.models {
    * disables a specific region, we publish the new list of all of the countries that
    * the organization is making available to its consumers.
    */
-  case class OrganizationCountriesPublished(
+  final case class OrganizationCountriesPublished(
     eventId: String,
     timestamp: _root_.org.joda.time.DateTime,
     organization: String,
     data: io.flow.published.event.v0.models.OrganizationCountriesData
   ) extends PublishedEvent
 
-  case class OrganizationRatecardTransitWindowsData(
+  final case class OrganizationRatecardTransitWindowsData(
     transitWindows: Seq[io.flow.published.event.v0.models.TransitWindow]
   )
 
@@ -60,14 +60,14 @@ package io.flow.published.event.v0.models {
    * bulk event - meaning any time a transit window changes, we publish a new
    * complete list of all transit windows.
    */
-  case class OrganizationRatecardTransitWindowsPublished(
+  final case class OrganizationRatecardTransitWindowsPublished(
     eventId: String,
     timestamp: _root_.org.joda.time.DateTime,
     organization: String,
     data: io.flow.published.event.v0.models.OrganizationRatecardTransitWindowsData
   ) extends PublishedEvent
 
-  case class OrganizationRatesData(
+  final case class OrganizationRatesData(
     rates: Seq[io.flow.currency.v0.models.Rate]
   )
 
@@ -78,7 +78,7 @@ package io.flow.published.event.v0.models {
    * after a rate is published, allowing us to aggregate multiple changes in a short
    * period of time to reduce the number of organization_rates_published we publish.
    */
-  case class OrganizationRatesPublished(
+  final case class OrganizationRatesPublished(
     eventId: String,
     timestamp: _root_.org.joda.time.DateTime,
     organization: String,
@@ -89,7 +89,7 @@ package io.flow.published.event.v0.models {
    * @param from min transit
    * @param to max transit
    */
-  case class TransitWindow(
+  final case class TransitWindow(
     originCountry: String,
     destinationCountry: String,
     from: Long,
@@ -104,7 +104,7 @@ package io.flow.published.event.v0.models {
    * @param description Information about the type that we received that is undefined in this version of
    *        the client.
    */
-  case class PublishedEventUndefinedType(
+  final case class PublishedEventUndefinedType(
     description: String
   ) extends PublishedEvent
 
