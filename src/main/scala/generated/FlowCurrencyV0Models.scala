@@ -132,12 +132,12 @@ package io.flow.currency.v0.models {
     }
 
     implicit def jsonReadsCurrencyOrganizationCurrencySetting: play.api.libs.json.Reads[OrganizationCurrencySetting] = {
-      (
-        (__ \ "id").read[String] and
-        (__ \ "base").read[String] and
-        (__ \ "target").read[String] and
-        (__ \ "margin").read[BigDecimal]
-      )(OrganizationCurrencySetting.apply _)
+      for {
+        id <- (__ \ "id").read[String]
+        base <- (__ \ "base").read[String]
+        target <- (__ \ "target").read[String]
+        margin <- (__ \ "margin").read[BigDecimal]
+      } yield OrganizationCurrencySetting(id, base, target, margin)
     }
 
     def jsObjectOrganizationCurrencySetting(obj: io.flow.currency.v0.models.OrganizationCurrencySetting): play.api.libs.json.JsObject = {
@@ -158,11 +158,11 @@ package io.flow.currency.v0.models {
     }
 
     implicit def jsonReadsCurrencyOrganizationCurrencySettingForm: play.api.libs.json.Reads[OrganizationCurrencySettingForm] = {
-      (
-        (__ \ "base").read[String] and
-        (__ \ "target").read[String] and
-        (__ \ "margin").read[BigDecimal]
-      )(OrganizationCurrencySettingForm.apply _)
+      for {
+        base <- (__ \ "base").read[String]
+        target <- (__ \ "target").read[String]
+        margin <- (__ \ "margin").read[BigDecimal]
+      } yield OrganizationCurrencySettingForm(base, target, margin)
     }
 
     def jsObjectOrganizationCurrencySettingForm(obj: io.flow.currency.v0.models.OrganizationCurrencySettingForm): play.api.libs.json.JsObject = {
@@ -182,12 +182,12 @@ package io.flow.currency.v0.models {
     }
 
     implicit def jsonReadsCurrencyOrganizationCurrencySettingVersion: play.api.libs.json.Reads[OrganizationCurrencySettingVersion] = {
-      (
-        (__ \ "id").read[String] and
-        (__ \ "timestamp").read[_root_.org.joda.time.DateTime] and
-        (__ \ "type").read[io.flow.common.v0.models.ChangeType] and
-        (__ \ "organization_currency_setting").read[io.flow.currency.v0.models.OrganizationCurrencySetting]
-      )(OrganizationCurrencySettingVersion.apply _)
+      for {
+        id <- (__ \ "id").read[String]
+        timestamp <- (__ \ "timestamp").read[_root_.org.joda.time.DateTime]
+        `type` <- (__ \ "type").read[io.flow.common.v0.models.ChangeType]
+        organizationCurrencySetting <- (__ \ "organization_currency_setting").read[io.flow.currency.v0.models.OrganizationCurrencySetting]
+      } yield OrganizationCurrencySettingVersion(id, timestamp, `type`, organizationCurrencySetting)
     }
 
     def jsObjectOrganizationCurrencySettingVersion(obj: io.flow.currency.v0.models.OrganizationCurrencySettingVersion): play.api.libs.json.JsObject = {
@@ -208,13 +208,13 @@ package io.flow.currency.v0.models {
     }
 
     implicit def jsonReadsCurrencyRate: play.api.libs.json.Reads[Rate] = {
-      (
-        (__ \ "id").read[String] and
-        (__ \ "base").read[String] and
-        (__ \ "target").read[String] and
-        (__ \ "effective_at").read[_root_.org.joda.time.DateTime] and
-        (__ \ "value").read[BigDecimal]
-      )(Rate.apply _)
+      for {
+        id <- (__ \ "id").read[String]
+        base <- (__ \ "base").read[String]
+        target <- (__ \ "target").read[String]
+        effectiveAt <- (__ \ "effective_at").read[_root_.org.joda.time.DateTime]
+        value <- (__ \ "value").read[BigDecimal]
+      } yield Rate(id, base, target, effectiveAt, value)
     }
 
     def jsObjectRate(obj: io.flow.currency.v0.models.Rate): play.api.libs.json.JsObject = {
@@ -236,11 +236,11 @@ package io.flow.currency.v0.models {
     }
 
     implicit def jsonReadsCurrencyRateForm: play.api.libs.json.Reads[RateForm] = {
-      (
-        (__ \ "base").read[String] and
-        (__ \ "target").read[String] and
-        (__ \ "effective_at").read[_root_.org.joda.time.DateTime]
-      )(RateForm.apply _)
+      for {
+        base <- (__ \ "base").read[String]
+        target <- (__ \ "target").read[String]
+        effectiveAt <- (__ \ "effective_at").read[_root_.org.joda.time.DateTime]
+      } yield RateForm(base, target, effectiveAt)
     }
 
     def jsObjectRateForm(obj: io.flow.currency.v0.models.RateForm): play.api.libs.json.JsObject = {
@@ -260,12 +260,12 @@ package io.flow.currency.v0.models {
     }
 
     implicit def jsonReadsCurrencyRateVersion: play.api.libs.json.Reads[RateVersion] = {
-      (
-        (__ \ "id").read[String] and
-        (__ \ "timestamp").read[_root_.org.joda.time.DateTime] and
-        (__ \ "type").read[io.flow.common.v0.models.ChangeType] and
-        (__ \ "rate").read[io.flow.currency.v0.models.Rate]
-      )(RateVersion.apply _)
+      for {
+        id <- (__ \ "id").read[String]
+        timestamp <- (__ \ "timestamp").read[_root_.org.joda.time.DateTime]
+        `type` <- (__ \ "type").read[io.flow.common.v0.models.ChangeType]
+        rate <- (__ \ "rate").read[io.flow.currency.v0.models.Rate]
+      } yield RateVersion(id, timestamp, `type`, rate)
     }
 
     def jsObjectRateVersion(obj: io.flow.currency.v0.models.RateVersion): play.api.libs.json.JsObject = {
