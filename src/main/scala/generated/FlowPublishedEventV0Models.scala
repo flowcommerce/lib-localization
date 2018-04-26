@@ -171,12 +171,12 @@ package io.flow.published.event.v0.models {
     }
 
     implicit def jsonReadsPublishedEventOrganizationCountriesPublished: play.api.libs.json.Reads[OrganizationCountriesPublished] = {
-      (
-        (__ \ "event_id").read[String] and
-        (__ \ "timestamp").read[_root_.org.joda.time.DateTime] and
-        (__ \ "organization").read[String] and
-        (__ \ "data").read[io.flow.published.event.v0.models.OrganizationCountriesData]
-      )(OrganizationCountriesPublished.apply _)
+      for {
+        eventId <- (__ \ "event_id").read[String]
+        timestamp <- (__ \ "timestamp").read[_root_.org.joda.time.DateTime]
+        organization <- (__ \ "organization").read[String]
+        data <- (__ \ "data").read[io.flow.published.event.v0.models.OrganizationCountriesData]
+      } yield OrganizationCountriesPublished(eventId, timestamp, organization, data)
     }
 
     def jsObjectOrganizationCountriesPublished(obj: io.flow.published.event.v0.models.OrganizationCountriesPublished): play.api.libs.json.JsObject = {
@@ -207,12 +207,12 @@ package io.flow.published.event.v0.models {
     }
 
     implicit def jsonReadsPublishedEventOrganizationRatecardTransitWindowsPublished: play.api.libs.json.Reads[OrganizationRatecardTransitWindowsPublished] = {
-      (
-        (__ \ "event_id").read[String] and
-        (__ \ "timestamp").read[_root_.org.joda.time.DateTime] and
-        (__ \ "organization").read[String] and
-        (__ \ "data").read[io.flow.published.event.v0.models.OrganizationRatecardTransitWindowsData]
-      )(OrganizationRatecardTransitWindowsPublished.apply _)
+      for {
+        eventId <- (__ \ "event_id").read[String]
+        timestamp <- (__ \ "timestamp").read[_root_.org.joda.time.DateTime]
+        organization <- (__ \ "organization").read[String]
+        data <- (__ \ "data").read[io.flow.published.event.v0.models.OrganizationRatecardTransitWindowsData]
+      } yield OrganizationRatecardTransitWindowsPublished(eventId, timestamp, organization, data)
     }
 
     def jsObjectOrganizationRatecardTransitWindowsPublished(obj: io.flow.published.event.v0.models.OrganizationRatecardTransitWindowsPublished): play.api.libs.json.JsObject = {
@@ -243,12 +243,12 @@ package io.flow.published.event.v0.models {
     }
 
     implicit def jsonReadsPublishedEventOrganizationRatesPublished: play.api.libs.json.Reads[OrganizationRatesPublished] = {
-      (
-        (__ \ "event_id").read[String] and
-        (__ \ "timestamp").read[_root_.org.joda.time.DateTime] and
-        (__ \ "organization").read[String] and
-        (__ \ "data").read[io.flow.published.event.v0.models.OrganizationRatesData]
-      )(OrganizationRatesPublished.apply _)
+      for {
+        eventId <- (__ \ "event_id").read[String]
+        timestamp <- (__ \ "timestamp").read[_root_.org.joda.time.DateTime]
+        organization <- (__ \ "organization").read[String]
+        data <- (__ \ "data").read[io.flow.published.event.v0.models.OrganizationRatesData]
+      } yield OrganizationRatesPublished(eventId, timestamp, organization, data)
     }
 
     def jsObjectOrganizationRatesPublished(obj: io.flow.published.event.v0.models.OrganizationRatesPublished): play.api.libs.json.JsObject = {
@@ -261,12 +261,12 @@ package io.flow.published.event.v0.models {
     }
 
     implicit def jsonReadsPublishedEventTransitWindow: play.api.libs.json.Reads[TransitWindow] = {
-      (
-        (__ \ "origin_country").read[String] and
-        (__ \ "destination_country").read[String] and
-        (__ \ "from").read[Long] and
-        (__ \ "to").read[Long]
-      )(TransitWindow.apply _)
+      for {
+        originCountry <- (__ \ "origin_country").read[String]
+        destinationCountry <- (__ \ "destination_country").read[String]
+        from <- (__ \ "from").read[Long]
+        to <- (__ \ "to").read[Long]
+      } yield TransitWindow(originCountry, destinationCountry, from, to)
     }
 
     def jsObjectTransitWindow(obj: io.flow.published.event.v0.models.TransitWindow): play.api.libs.json.JsObject = {
