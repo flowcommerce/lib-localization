@@ -1,0 +1,14 @@
+---
+flow:
+  published-event:
+    play_2_x_standalone_json:
+    - src/main/scala/generated/FlowPublishedEventV0Models.scala
+  common:
+    play_2_x_standalone_json:
+    - src/main/scala/generated/FlowCommonV0Models.scala
+  currency:
+    play_2_x_standalone_json:
+    - src/main/scala/generated/FlowCurrencyV0Models.scala
+  error:
+    play_2_x_standalone_json:
+    - src/main/scala/generated/FlowErrorV0Models.scala
