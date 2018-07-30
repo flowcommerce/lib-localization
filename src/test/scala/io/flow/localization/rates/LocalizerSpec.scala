@@ -11,6 +11,7 @@ import org.mockito.Mockito._
 import org.msgpack.jackson.dataformat.MessagePackFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.collection.JavaConverters._
@@ -18,6 +19,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class LocalizerSpec extends WordSpec with MockitoSugar with Matchers with ScalaFutures {
+
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(Span(5, Seconds))
 
   private val pricing50Cad = Map(
     CurrencyKey -> Currencies.Cad.iso42173,
